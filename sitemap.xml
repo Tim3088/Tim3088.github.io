@@ -2,25 +2,25 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>111.229.33.170/posts/gin%E5%AD%A6%E4%B9%A0/</loc>
+    <loc>https://tim3088.github.io/posts/gin%E5%AD%A6%E4%B9%A0/</loc>
     <lastmod>2024-10-14T23:56:21+08:00</lastmod>
   </url><url>
-    <loc>111.229.33.170/tags/golang/</loc>
+    <loc>https://tim3088.github.io/tags/golang/</loc>
     <lastmod>2024-10-14T23:56:21+08:00</lastmod>
   </url><url>
-    <loc>111.229.33.170/posts/</loc>
+    <loc>https://tim3088.github.io/posts/</loc>
     <lastmod>2024-10-14T23:56:21+08:00</lastmod>
   </url><url>
-    <loc>111.229.33.170/tags/</loc>
+    <loc>https://tim3088.github.io/tags/</loc>
     <lastmod>2024-10-14T23:56:21+08:00</lastmod>
   </url><url>
-    <loc>111.229.33.170/</loc>
+    <loc>https://tim3088.github.io/</loc>
     <lastmod>2024-10-14T23:56:21+08:00</lastmod>
   </url><url>
-    <loc>111.229.33.170/posts/updated-test-article/</loc>
+    <loc>https://tim3088.github.io/posts/updated-test-article/</loc>
     <lastmod>2024-10-14T23:05:17+08:00</lastmod>
   </url><url>
-    <loc>111.229.33.170/tags/%E6%B5%8B%E8%AF%95/</loc>
+    <loc>https://tim3088.github.io/tags/%E6%B5%8B%E8%AF%95/</loc>
     <lastmod>2024-10-14T23:05:17+08:00</lastmod>
   </url>
 </urlset>
