@@ -2,9 +2,6 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://111.229.33.170/posts/gin%E5%AD%A6%E4%B9%A0/</loc>
-    <lastmod>2024-10-14T23:56:21+08:00</lastmod>
-  </url><url>
     <loc>http://111.229.33.170/tags/golang/</loc>
     <lastmod>2024-10-14T23:56:21+08:00</lastmod>
   </url><url>
@@ -15,6 +12,9 @@
     <lastmod>2024-10-14T23:56:21+08:00</lastmod>
   </url><url>
     <loc>http://111.229.33.170/</loc>
+    <lastmod>2024-10-14T23:56:21+08:00</lastmod>
+  </url><url>
+    <loc>http://111.229.33.170/posts/%E6%B5%8B%E8%AF%95/</loc>
     <lastmod>2024-10-14T23:56:21+08:00</lastmod>
   </url><url>
     <loc>http://111.229.33.170/posts/updated-test-article/</loc>
