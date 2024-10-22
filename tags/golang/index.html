@@ -129,27 +129,27 @@
 <header class="page-header"><div class="breadcrumbs"><a href="http://111.229.33.170/">Home</a>&nbsp;»&nbsp;<a href="http://111.229.33.170/tags/">Tags</a></div>
   <h1>
     Golang
+    <a href="/tags/golang/index.xml" title="RSS" aria-label="RSS">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" height="23">
+        <path d="M4 11a9 9 0 0 1 9 9" />
+        <path d="M4 4a16 16 0 0 1 16 16" />
+        <circle cx="5" cy="19" r="1" />
+      </svg>
+    </a>
   </h1>
 </header>
 
 <article class="post-entry tag-entry"> 
   <header class="entry-header">
-    <h2 class="entry-hint-parent">在云服务器上部署minIO服务
+    <h2 class="entry-hint-parent">测试标签
     </h2>
   </header>
   <div class="entry-content">
-    <p>OSS OSS，全称就是对象存储服务。何为对象存储？我们来看下阿里云 OSS （Object Storage Service）的介绍：
-对象存储服务（Object Storage Service，OSS）是一种海量、安全、低成本、高可靠的云存储服务，适合存放任意类型的文件。容量和处理能力弹性扩展，多种存储类型供选择，全面优化存储成本。 对象存储呈现出来的是一个“桶”（bucket），你可以往“桶”里面放“对象（Object）”。这个对象包括三个部分：Key、Data、Metadata。key 就是对象在这个桶中的唯一标识；data 就是数据；metadata 就是标签，可以方便排序。
-Minio 是个基于 Golang 编写的开源对象存储套件，虽然轻量，却拥有着不错的性能。麻雀虽小，五脏俱全，适合中小企业使用。当然 Minio 除了直接作为对象存储使用，还可以作为云上对象存储服务的网关层，无缝对接到 Amazon S3、MicroSoft Azure。 MinIO 非常适合于存储大容量非结构化的数据。 例如图片、视频、日志文件、备份数据和容器/虚拟机镜像等，而一个对象文件可以是任意大小，从几 kb 到最大 5T 不等。
-使用 Docker 部署 MinIO 这里假如使用 Minio 自带的域名服务来配置 https 十分繁琐并且坑非常非常多，于是我们使用常见的 nginx 反代理来处理，使得 https 的配置非常简单，并且传输上更为安全
-我们出于便捷上的考虑使用 docker 来部署 MinIO
-首先我们需要在本机上创建两个文件夹用于存放数据与配置文件
-mkdir -p /home/minio/config mkdir -p /home/minio/data 然后我们获取 docker 的镜像
-docker pull minio/minio 查看一下镜像是否下载到本地的仓库中了，如果已经存在，我们即可直接运行，命令如下
-docker run -d -p 9090:9090 -p 9000:9000 --name minio \ -e &#34;MINIO_ROOT_USER=admin&#34; \ -e &#34;MINIO_ROOT_PASSWORD=12345678&#34; \ -e &#34;MINIO_SERVER_URL=https://minio.test.com &#34; \ -e &#34;MINIO_BROWSER_REDIRECT_URL=https://minio.test.com/console&#34; \ -v /home/minio/data:/data \ -v /home/minio/config:/root/.minio \ minio/minio server /data --console-address &#34;:9000&#34; -address &#34;:9090&#34; #ProxyStart upstream minio { server 127.0.0.1:9090 fail_timeout=0; } server { listen 443 ssl; server_name minio.test.com; ssl_certificate /cert/minio.test.com.pem; ssl_certificate_key /cert/minio.test.com.key; ssl_session_timeout 5m; ssl_protocols TLSv1 TLSv1.1 TLSv1.2; ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE; ssl_prefer_server_ciphers on; client_max_body_size 30m; #最大上传限制 proxy_set_header Host $http_host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; proxy_set_header Upgrade $http_upgrade; proxy_set_header Connection &#34;upgrade&#34;; location / { proxy_pass http://localhost:9090/; } location /console/{ proxy_pass http://localhost:9000/; } #异常状态码跳转 error_page 307 https://www.test.com; error_page 400 https://www.test.com; error_page 403 https://www.test.com; error_page 404 https://www.test.com; error_page 500 https://www.test.com; error_page 502 https://www.test.com; } #ProxyEnd #http forced jump https http强制跳转https配置 server{ listen 80; server_name minio.test.com; rewrite ^(.*)$ https://minio.test.com; location ~ / { index index.html index.php index.htm; } } </p>
+    <p>golang标签</p>
   </div>
-  <footer class="entry-footer"><span title='2024-10-22 10:38:22 +0800 +0800'>October 22, 2024</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;Ziven</footer>
-  <a class="entry-link" aria-label="post link to 在云服务器上部署minIO服务" href="http://111.229.33.170/posts/minio/"></a>
+  <footer class="entry-footer"><span title='2024-10-22 10:38:22 +0800 +0800'>October 22, 2024</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;2 words&nbsp;·&nbsp;Ziven</footer>
+  <a class="entry-link" aria-label="post link to 测试标签" href="http://111.229.33.170/posts/minio/"></a>
 </article>
     </main>
     
