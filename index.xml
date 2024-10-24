@@ -6,21 +6,21 @@
     <description>Recent content on Ziven&#39;s Blog</description>
     <generator>Hugo -- 0.135.0</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 22 Oct 2024 12:39:50 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 22 Oct 2024 20:38:22 +0800</lastBuildDate>
     <atom:link href="http://111.229.33.170/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>测试</title>
-      <link>http://111.229.33.170/posts/test/</link>
-      <pubDate>Tue, 22 Oct 2024 12:39:50 +0800</pubDate>
-      <guid>http://111.229.33.170/posts/test/</guid>
-      <description>测试</description>
+      <title>JWT的学习</title>
+      <link>http://111.229.33.170/posts/jwt/</link>
+      <pubDate>Tue, 22 Oct 2024 20:38:22 +0800</pubDate>
+      <guid>http://111.229.33.170/posts/jwt/</guid>
+      <description>对JWT的用法以及相关面试题总结</description>
     </item>
     <item>
-      <title>测试标签</title>
-      <link>http://111.229.33.170/posts/minio/</link>
-      <pubDate>Tue, 22 Oct 2024 10:38:22 +0800</pubDate>
-      <guid>http://111.229.33.170/posts/minio/</guid>
-      <description>golang标签</description>
+      <title>关于asynq任务队列的学习</title>
+      <link>http://111.229.33.170/posts/asynq-go/</link>
+      <pubDate>Tue, 22 Oct 2024 20:38:22 +0800</pubDate>
+      <guid>http://111.229.33.170/posts/asynq-go/</guid>
+      <description>对asynq的解析以及相关面试题总结</description>
     </item>
     <item>
       <title>友链</title>
