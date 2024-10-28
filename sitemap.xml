@@ -2,32 +2,32 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://111.229.33.170/tags/golang/</loc>
+    <loc>http://blog.ziven.site/tags/golang/</loc>
     <lastmod>2024-10-25T16:23:22+08:00</lastmod>
   </url><url>
-    <loc>http://111.229.33.170/posts/</loc>
+    <loc>http://blog.ziven.site/posts/</loc>
     <lastmod>2024-10-25T16:23:22+08:00</lastmod>
   </url><url>
-    <loc>http://111.229.33.170/tags/</loc>
+    <loc>http://blog.ziven.site/tags/</loc>
     <lastmod>2024-10-25T16:23:22+08:00</lastmod>
   </url><url>
-    <loc>http://111.229.33.170/</loc>
+    <loc>http://blog.ziven.site/</loc>
     <lastmod>2024-10-25T16:23:22+08:00</lastmod>
   </url><url>
-    <loc>http://111.229.33.170/posts/asynq-go/</loc>
+    <loc>http://blog.ziven.site/posts/asynq-go/</loc>
     <lastmod>2024-10-25T16:23:22+08:00</lastmod>
   </url><url>
-    <loc>http://111.229.33.170/tags/java/</loc>
+    <loc>http://blog.ziven.site/tags/java/</loc>
     <lastmod>2024-10-22T20:38:22+08:00</lastmod>
   </url><url>
-    <loc>http://111.229.33.170/posts/jwt/</loc>
+    <loc>http://blog.ziven.site/posts/jwt/</loc>
     <lastmod>2024-10-22T20:38:22+08:00</lastmod>
   </url><url>
-    <loc>http://111.229.33.170/posts/spring-boot/</loc>
+    <loc>http://blog.ziven.site/posts/spring-boot/</loc>
     <lastmod>2024-10-22T20:38:22+08:00</lastmod>
   </url><url>
-    <loc>http://111.229.33.170/categories/</loc>
+    <loc>http://blog.ziven.site/categories/</loc>
   </url><url>
-    <loc>http://111.229.33.170/links/</loc>
+    <loc>http://blog.ziven.site/links/</loc>
   </url>
 </urlset>
