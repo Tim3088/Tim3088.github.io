@@ -6,8 +6,15 @@
     <description>Recent content on Ziven&#39;s Blog</description>
     <generator>Hugo -- 0.135.0</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Fri, 25 Oct 2024 16:23:22 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 04 Nov 2024 18:38:22 +0800</lastBuildDate>
     <atom:link href="https://blog.ziven.site/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>关于redis的学习</title>
+      <link>https://blog.ziven.site/posts/redis/</link>
+      <pubDate>Mon, 04 Nov 2024 18:38:22 +0800</pubDate>
+      <guid>https://blog.ziven.site/posts/redis/</guid>
+      <description>redis如何在大厂中应用</description>
+    </item>
     <item>
       <title>关于Asynq任务队列的学习</title>
       <link>https://blog.ziven.site/posts/asynq-go/</link>
