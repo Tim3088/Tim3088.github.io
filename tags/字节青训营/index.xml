@@ -6,8 +6,15 @@
     <description>Recent content in 字节青训营 on Tim&#39;s Blog</description>
     <generator>Hugo -- 0.135.0</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 19 Nov 2024 11:28:18 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 20 Jan 2025 04:00:22 +0800</lastBuildDate>
     <atom:link href="https://blog.ziven.site/tags/%E5%AD%97%E8%8A%82%E9%9D%92%E8%AE%AD%E8%90%A5/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>关于redis的学习</title>
+      <link>https://blog.ziven.site/posts/redis/</link>
+      <pubDate>Mon, 20 Jan 2025 04:00:22 +0800</pubDate>
+      <guid>https://blog.ziven.site/posts/redis/</guid>
+      <description>redis如何在大厂中应用</description>
+    </item>
     <item>
       <title>浅谈微服务架构</title>
       <link>https://blog.ziven.site/posts/microservice-framework/</link>
@@ -21,13 +28,6 @@
       <pubDate>Mon, 18 Nov 2024 20:21:18 +0800</pubDate>
       <guid>https://blog.ziven.site/posts/pprof/</guid>
       <description>如何编写高质量的Go代码以及性能调优</description>
-    </item>
-    <item>
-      <title>关于redis的学习</title>
-      <link>https://blog.ziven.site/posts/redis/</link>
-      <pubDate>Mon, 04 Nov 2024 18:38:22 +0800</pubDate>
-      <guid>https://blog.ziven.site/posts/redis/</guid>
-      <description>redis如何在大厂中应用</description>
     </item>
   </channel>
 </rss>

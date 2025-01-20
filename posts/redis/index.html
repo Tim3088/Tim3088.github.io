@@ -59,8 +59,8 @@
 <meta property="og:description" content="redis如何在大厂中应用" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://blog.ziven.site/posts/redis/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2024-11-04T18:38:22+08:00" />
-<meta property="article:modified_time" content="2024-11-04T18:38:22+08:00" />
+<meta property="article:published_time" content="2025-01-20T04:00:22+08:00" />
+<meta property="article:modified_time" content="2025-01-20T04:00:22+08:00" />
 
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="关于redis的学习"/>
@@ -97,11 +97,11 @@
   "keywords": [
     "golang", "字节青训营"
   ],
-  "articleBody": "",
-  "wordCount" : "0",
+  "articleBody": "Redis 应用案例 连续签到 Key：cc_uid_1165894833417101(用户匿名ID) value：252(已签到天数) expireAt：后天的零点 消息通知 消息队列(lpush生产 rpop消费) 代码实现 const ex04ListenList = \"ex04_list_0\" // lpush ex04_list_0 AA BB // Ex04Params Ex04的自定义函数 type Ex04Params struct { } func Ex04(ctx context.Context) { eventLogger := \u0026common.ConcurrentEventLogger{} // new一个并发执行器 // routineNums是消费端的数量，多消费的场景，可以使用ConsumerPop cInst := common.NewConcurrentRoutine(1, eventLogger) // 并发执行用户自定义函数work cInst.Run(ctx, Ex04Params{}, ConsumerPop) // 按日志时间正序打印日志 eventLogger.PrintLogs() } // ex04ConsumerPop 使用rpop逐条消费队列中的信息，数据从队列中移除 // 生成端使用：lpush ex04_list_0 AA BB func ConsumerPop(ctx context.Context, cInstParam common.CInstParams) { routine := cInstParam.Routine for { items, err := RedisClient.BRPop(ctx, 0, ex04ListenList).Result() if err != nil { panic(err) } fmt.Println(common.LogFormat(routine, \"读取文章[%s]标题、正文，发送到ES更新索引\", items[1])) // 将文章内容推送到ES time.Sleep(1 * time.Second) } } 涉及到的数据结构(Quicklist) 计数 可通过hash结构存储 代码实现 // 通过管道技术一次性存储 func InitUserCounter(ctx context.Context) { // pipe 管道技术，批量执行命令 pipe := RedisClient.Pipeline() userCounters := []map[string]interface{}{ {\"user_id\": \"1556564194374926\", \"got_digg_count\": 10693, \"got_view_count\": 2238438, \"followee_count\": 176, \"follower_count\": 9895, \"follow_collect_set_count\": 0, \"subscribe_tag_count\": 95}, {\"user_id\": \"1111\", \"got_digg_count\": 19, \"got_view_count\": 4}, {\"user_id\": \"2222\", \"got_digg_count\": 1238, \"follower_count\": 379}, } for _, counter := range userCounters { uid, err := strconv.ParseInt(counter[\"user_id\"].(string), 10, 64) key := GetUserCounterKey(uid) rw, err := pipe.Del(ctx, key).Result() if err != nil { fmt.Printf(\"del %s, rw=%d\\n\", key, rw) } _, err = pipe.HMSet(ctx, key, counter).Result() if err != nil { panic(err) } fmt.Printf(\"设置 uid=%d, key=%s\\n\", uid, key) } // 批量执行上面for循环设置好的hmset命令 _, err := pipe.Exec(ctx) if err != nil { // 报错后进行一次额外尝试 _, err = pipe.Exec(ctx) if err != nil { panic(err) } } } 涉及到的数据结构(Hash) 渐进式rehash: KV过多时, 直接迁移会阻塞请求, 因此将迁移平摊到用户访问的过程中, 确保内存使用能够平滑过渡\n排行榜 代码实现 func InitUserScore(ctx context.Context) { initList := []redis.Z{ {Member: \"user1\", Score: float64(GetScoreWithTime(ctx, 10))}, {Member: \"user2\", Score: float64(GetScoreWithTime(ctx, 232))}, {Member: \"user3\", Score: float64(GetScoreWithTime(ctx, 129))}, } // 清空榜单 if err := RedisClient.Del(ctx, Ex062RankKey).Err(); err != nil { panic(err) } nums, err := RedisClient.ZAdd(ctx, Ex062RankKey, initList...).Result() if err != nil { panic(err) } fmt.Printf(\"初始化榜单Item数量:%d\\n\", nums) time.Sleep(2 * time.Second) lastItem := []redis.Z{ {Member: \"user4\", Score: float64(GetScoreWithTime(ctx, 232))}, } nums, err = RedisClient.ZAdd(ctx, Ex062RankKey, lastItem...).Result() if err != nil { panic(err) } fmt.Printf(\"初始化榜单Item数量:%d\\n\", nums) } 涉及到的数据结构(zset/zskiplist跳表) skiplist跳表 对有序链表进行优化(空间换时间)，使查找效率可以达到 O(log n)，接近二叉搜索树\nzskiplist 结合dict实现\n限流 代码实现 func work(ctx context.Context, cInstParam common.CInstParams) { // ... 省略变量声明 ... // 1. 获取当前时间窗口的 key key := ex03LimitKey(time.Now()) // 2. 计数器增加 currentQPS, err := RedisClient.Incr(ctx, key).Result() if err != nil || err == redis.Nil { // 重试一次 err = RedisClient.Incr(ctx, key).Err() if err != nil { panic(err) } } // 3. 限流判断 if currentQPS \u003e maxQPS { // 超过限制的处理逻辑 // ... } else { // 正常放行的处理逻辑 // ... } } 分布式锁 并发场景，要求一次只能有一个协程运行，执行完成后，其他等待中的协程才能执行\n通过redis的setnx实现, 利用如下两个特性 Redis 是单线程执行命令 setnx 只有未设置过才能执行成功 代码实现 const resourceKey = \"syncKey\" // 分布式锁的key const exp = 800 * time.Millisecond // 锁的过期时间 避免死锁 // 核心工作函数 func work(ctx context.Context, cInstParam common.CInstParams) { routine := cInstParam.Routine // 确保最后释放锁 defer releaseLock(ctx, routine) for { // 1. 尝试获取锁（使用 SetNX 命令） acquired, err := RedisClient.SetNX(ctx, resourceKey, routine, exp).Result() if acquired { // 2. 获取锁成功，执行业务逻辑 doSomething() return } else { // 3. 获取锁失败，等待后重试 time.Sleep(100 * time.Millisecond) } } } // 释放锁 func releaseLock(ctx context.Context, routine int) { // 1. 检查当前锁是否属于自己 routineMark, _ := RedisClient.Get(ctx, resourceKey).Result() if strconv.FormatInt(int64(routine), 10) != routineMark { // 不是自己的锁，不能删除 panic(\"cannot delete other's lock\") } // 2. 删除锁 RedisClient.Del(ctx, resourceKey) } 以上代码只是体验SetNX的特性，不是高可用的分布式锁实现，存在如下问题 业务超时解锁，导致并发问题。业务执行时间超过锁超时时间 // 解决方案 实现锁的续期机制 func acquireLockWithRenewal(key, value string) { lockTimeout := 30 * time.Second // 1. 获取锁 success := RedisClient.SetNX(key, value, lockTimeout) if !success { return } // 2. 创建续期器 ticker := time.NewTicker(lockTimeout / 3) // 每10秒续期一次 stopChan := make(chan bool) go func() { defer ticker.Stop() for { select { case \u003c-ticker.C: // 每10秒触发一次 // 3. 定期续期 先检测当前锁是否属于自己 if isLockHeld(key, value) { RedisClient.Expire(key, lockTimeout) } else { return } case \u003c-stopChan: // 收到停止信号 return } } }() // 4. 执行业务逻辑 doSomething() // 5. 停止续期 stopChan \u003c- true } redis主备切换临界点问题。主备切换后，A持有的锁还未同步到新的主节点时，B可在新主节点获取锁，导致并发问题 时间轴 客户端A 主节点 从节点 客户端B | | 获取锁成功 --\u003e 写入锁 | | | 故障发生 | | | x --\u003e 升级为主节点 | ↑ | 获取锁成功 \u003c-- 请求锁 | ↓ (此时A和B都认为自己持有锁) // 解决方案 // 使用 Redis Cluster 或 Sentinel type SafeDistributedLock struct { client *redis.ClusterClient key string } func (l *SafeDistributedLock) AcquireLock(value string, expiry time.Duration) bool { // 使用 Lua 脚本确保原子性 script := ` if redis.call(\"set\", KEYS[1], ARGV[1], \"NX\", \"PX\", ARGV[2]) then return 1 else return 0 end ` // 在集群环境中执行 result, err := l.client.Eval(script, []string{l.key}, value, expiry.Milliseconds()).Result() return err == nil \u0026\u0026 result == 1 } redis集群脑裂，导致出现多个主节点 // 解决方案 func example() { // 创建多个Redis实例的客户端 lock := \u0026SafeDistributedLock{ clients: []*redis.Client{ redis.NewClient(\u0026redis.Options{Addr: \":6379\"}), redis.NewClient(\u0026redis.Options{Addr: \":6380\"}), redis.NewClient(\u0026redis.Options{Addr: \":6381\"}), redis.NewClient(\u0026redis.Options{Addr: \":6382\"}), redis.NewClient(\u0026redis.Options{Addr: \":6383\"}), }, quorum: 3, // 需要至少3个节点同意 key: \"my_lock\", value: uuid.New().String(), expiry: 30 * time.Second, } if lock.Lock() { defer lock.Unlock() // 执行业务逻辑 doSomething() } } Redis使用注意事项 大Key 定义 危害 读取成本高 容易导致慢查询(过期、删除) 主从复制异常，服务阻塞 无法响应正常请求 解决方案 拆分 压缩 将 valuel 压缩后写入 redis，读取时解压后再使用。压缩算法可以是 gzip、snappy、lz4 等。通常情况下，一个压缩算法压缩率高、则解压耗时就长。需要对实际数据进行测试后，选择一个合适的算法 如果存储的是 JSON 字符串，可以考虑使用 MessagePack 进行序列化 集合类结构 hash、list、set 拆分：可以用 hash 取余、位掩码的方式决定放在哪个 Key 中 区分冷热：如榜单列表场景使用 zset，只缓存前 10 页数据，后续数据走 db 热Key 定义 用户访问一个 Key 的 QPS 特别高，导致 Server 实例出现 CPU 负载突增或者不均的情况\n解决方案 设置 Localcache 在访问 Redis 前，在业务服务侧设置 Localcache，降低访问 Redis 的 QPS。LocalCache 中缓存过期或未命中，则从 Redist 中将数据更新到 LocalCache。Java 的 Guava、Golang 的 Bigcache 就是这类 LocalCache 拆分 将 key : value 这一个热 Key 复制写入多份，例如 key1 : value,key2 : value，访问的时候访问多个 key，但 value 是同一个，以此将 qps 分散到不同实例上，降低负载。代价是，更新时需要更新多个 key，存在数据短暂不一致的风险 使用 Redis 代理的热 Key 承载能力(综合以上两个解决方案) 字节跳动的 Redis 访问代理就具备热 Key 承载能力。本质上是结合了“热 Key 发现”、“LocalCache”两个功能 慢查询场景 容易导致慢查询的操作 批量操作(例如前面提到的pipe)一次性传入过多的 key/value，如 mset/hmset/sadd/zadd 等 O(n)操作建议单批次不要超过 100，超过 100 之后性能下降明显 Zset 大部分命令都是 O(log(n))，当大小超过 5k 以上时，简单的 zadd/zrem 也可能导致慢查询 操作的单个 vaue 过大，超过 10KB。也即，避免使用大 Key 对大 key 的 delete/expire 操作也可能导致慢查询，Redis4.0 之前不支持异步删除 unlink，大 key 删除会阻塞 Redis 缓存穿透、缓存雪崩 缓存穿透(热点数据查询绕过缓存，直接查询数据库) 危害 查询一个一定不存在的数据 通常不会缓存不存在的数据，这类查询请求都会直接打到 db，如果有系统 bug 或人为攻击，那么容易导致 db 响应慢甚至宕机 缓存过期时 在高并发场景下，一个热 key 如果过期，会有大量请求同时击穿至 db，容易影响 db 性能和稳定 同一时间有大量 key 集中过期时，也会导致大量请求落到 db 上，导致查询变慢，甚至出现 db 无法响应新的查询 解决方案 缓存空值 如一个不存在的 userlD。这个 id 在缓存和数据库中都不存在。则可以缓存一个空值，下次再查缓存直接反空值 布隆过滤器 通过 bloom filter 算法来存储合法 Key，得益于该算法超高的压缩率，只需占用极小的空间就能存储大量 key 值 缓存雪崩(大量缓存同时过期) 解决方案 缓存空值 将缓存失效时间分散开，比如在原有的失效时间基础上增加一个随机值，例如不同 Key 过期时间可以设置为 10 分 1 秒过期，10 分 23 秒过期，10 分 8 秒过期。单位秒部分就是随机时间，这样过期时间就分散了 对于热点数据，过期时间尽量设置得长一些，冷门的数据可以相对设置过期时间短一些 使用缓存集群，避免单机宕机造成的缓存雪崩 ",
+  "wordCount" : "906",
   "inLanguage": "en",
-  "datePublished": "2024-11-04T18:38:22+08:00",
-  "dateModified": "2024-11-04T18:38:22+08:00",
+  "datePublished": "2025-01-20T04:00:22+08:00",
+  "dateModified": "2025-01-20T04:00:22+08:00",
   "author":[{
     "@type": "Person",
     "name": "Ziven"
@@ -187,18 +187,536 @@
     <div class="breadcrumbs"><a href="https://blog.ziven.site/">Home</a>&nbsp;»&nbsp;<a href="https://blog.ziven.site/posts/">Posts</a></div>
     <h1 class="post-title entry-hint-parent">
       关于redis的学习
-      <span class="entry-hint" title="Draft">
-        <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" fill="currentColor">
-          <path
-            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
-        </svg>
-      </span>
     </h1>
-    <div class="post-meta"><span title='2024-11-04 18:38:22 +0800 +0800'>November 4, 2024</span>&nbsp;·&nbsp;0 min&nbsp;·&nbsp;0 words&nbsp;·&nbsp;Ziven
+    <div class="post-meta"><span title='2025-01-20 04:00:22 +0800 +0800'>January 20, 2025</span>&nbsp;·&nbsp;5 min&nbsp;·&nbsp;906 words&nbsp;·&nbsp;Ziven
 
 </div>
-  </header> 
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
 
+        <div class="inner"><ul>
+                <li>
+                    <a href="#redis-%e5%ba%94%e7%94%a8%e6%a1%88%e4%be%8b" aria-label="Redis 应用案例">Redis 应用案例</a><ul>
+                        
+                <li>
+                    <a href="#%e8%bf%9e%e7%bb%ad%e7%ad%be%e5%88%b0" aria-label="连续签到">连续签到</a></li>
+                <li>
+                    <a href="#%e6%b6%88%e6%81%af%e9%80%9a%e7%9f%a5" aria-label="消息通知">消息通知</a><ul>
+                        
+                <li>
+                    <a href="#%e6%b6%88%e6%81%af%e9%98%9f%e5%88%97lpush%e7%94%9f%e4%ba%a7-rpop%e6%b6%88%e8%b4%b9" aria-label="消息队列(lpush生产 rpop消费)">消息队列(lpush生产 rpop消费)</a><ul>
+                        
+                <li>
+                    <a href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0" aria-label="代码实现">代码实现</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e6%b6%89%e5%8f%8a%e5%88%b0%e7%9a%84%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84quicklist" aria-label="涉及到的数据结构(Quicklist)">涉及到的数据结构(Quicklist)</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e8%ae%a1%e6%95%b0" aria-label="计数">计数</a><ul>
+                        
+                <li>
+                    <a href="#%e5%8f%af%e9%80%9a%e8%bf%87hash%e7%bb%93%e6%9e%84%e5%ad%98%e5%82%a8" aria-label="可通过hash结构存储">可通过hash结构存储</a></li>
+                <li>
+                    <a href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0-1" aria-label="代码实现">代码实现</a></li>
+                <li>
+                    <a href="#%e6%b6%89%e5%8f%8a%e5%88%b0%e7%9a%84%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84hash" aria-label="涉及到的数据结构(Hash)">涉及到的数据结构(Hash)</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e6%8e%92%e8%a1%8c%e6%a6%9c" aria-label="排行榜">排行榜</a><ul>
+                        
+                <li>
+                    <a href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0-2" aria-label="代码实现">代码实现</a></li>
+                <li>
+                    <a href="#%e6%b6%89%e5%8f%8a%e5%88%b0%e7%9a%84%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84zsetzskiplist%e8%b7%b3%e8%a1%a8" aria-label="涉及到的数据结构(zset/zskiplist跳表)">涉及到的数据结构(zset/zskiplist跳表)</a><ul>
+                        
+                <li>
+                    <a href="#skiplist%e8%b7%b3%e8%a1%a8" aria-label="skiplist跳表">skiplist跳表</a></li>
+                <li>
+                    <a href="#zskiplist" aria-label="zskiplist">zskiplist</a></li></ul>
+                </li></ul>
+                </li>
+                <li>
+                    <a href="#%e9%99%90%e6%b5%81" aria-label="限流">限流</a><ul>
+                        
+                <li>
+                    <a href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0-3" aria-label="代码实现">代码实现</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e5%88%86%e5%b8%83%e5%bc%8f%e9%94%81" aria-label="分布式锁">分布式锁</a><ul>
+                        
+                <li>
+                    <a href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0-4" aria-label="代码实现">代码实现</a><ul>
+                        
+                <li>
+                    <a href="#%e4%bb%a5%e4%b8%8a%e4%bb%a3%e7%a0%81%e5%8f%aa%e6%98%af%e4%bd%93%e9%aa%8csetnx%e7%9a%84%e7%89%b9%e6%80%a7%e4%b8%8d%e6%98%af%e9%ab%98%e5%8f%af%e7%94%a8%e7%9a%84%e5%88%86%e5%b8%83%e5%bc%8f%e9%94%81%e5%ae%9e%e7%8e%b0%e5%ad%98%e5%9c%a8%e5%a6%82%e4%b8%8b%e9%97%ae%e9%a2%98" aria-label="以上代码只是体验SetNX的特性，不是高可用的分布式锁实现，存在如下问题">以上代码只是体验SetNX的特性，不是高可用的分布式锁实现，存在如下问题</a></li></ul>
+                </li></ul>
+                </li></ul>
+                </li>
+                <li>
+                    <a href="#redis%e4%bd%bf%e7%94%a8%e6%b3%a8%e6%84%8f%e4%ba%8b%e9%a1%b9" aria-label="Redis使用注意事项">Redis使用注意事项</a><ul>
+                        
+                <li>
+                    <a href="#%e5%a4%a7key" aria-label="大Key">大Key</a><ul>
+                        
+                <li>
+                    <a href="#%e5%ae%9a%e4%b9%89" aria-label="定义">定义</a></li>
+                <li>
+                    <a href="#%e5%8d%b1%e5%ae%b3" aria-label="危害">危害</a></li>
+                <li>
+                    <a href="#%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88" aria-label="解决方案">解决方案</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e7%83%adkey" aria-label="热Key">热Key</a><ul>
+                        
+                <li>
+                    <a href="#%e5%ae%9a%e4%b9%89-1" aria-label="定义">定义</a></li>
+                <li>
+                    <a href="#%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88-1" aria-label="解决方案">解决方案</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e6%85%a2%e6%9f%a5%e8%af%a2%e5%9c%ba%e6%99%af" aria-label="慢查询场景">慢查询场景</a><ul>
+                        
+                <li>
+                    <a href="#%e5%ae%b9%e6%98%93%e5%af%bc%e8%87%b4%e6%85%a2%e6%9f%a5%e8%af%a2%e7%9a%84%e6%93%8d%e4%bd%9c" aria-label="容易导致慢查询的操作">容易导致慢查询的操作</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e7%bc%93%e5%ad%98%e7%a9%bf%e9%80%8f%e7%bc%93%e5%ad%98%e9%9b%aa%e5%b4%a9" aria-label="缓存穿透、缓存雪崩">缓存穿透、缓存雪崩</a><ul>
+                        
+                <li>
+                    <a href="#%e7%bc%93%e5%ad%98%e7%a9%bf%e9%80%8f%e7%83%ad%e7%82%b9%e6%95%b0%e6%8d%ae%e6%9f%a5%e8%af%a2%e7%bb%95%e8%bf%87%e7%bc%93%e5%ad%98%e7%9b%b4%e6%8e%a5%e6%9f%a5%e8%af%a2%e6%95%b0%e6%8d%ae%e5%ba%93" aria-label="缓存穿透(热点数据查询绕过缓存，直接查询数据库)">缓存穿透(热点数据查询绕过缓存，直接查询数据库)</a><ul>
+                        
+                <li>
+                    <a href="#%e5%8d%b1%e5%ae%b3-1" aria-label="危害">危害</a></li>
+                <li>
+                    <a href="#%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88-2" aria-label="解决方案">解决方案</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e7%bc%93%e5%ad%98%e9%9b%aa%e5%b4%a9%e5%a4%a7%e9%87%8f%e7%bc%93%e5%ad%98%e5%90%8c%e6%97%b6%e8%bf%87%e6%9c%9f" aria-label="缓存雪崩(大量缓存同时过期)">缓存雪崩(大量缓存同时过期)</a><ul>
+                        
+                <li>
+                    <a href="#%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88-3" aria-label="解决方案">解决方案</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+            </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><h1 id="redis-应用案例">Redis 应用案例<a hidden class="anchor" aria-hidden="true" href="#redis-应用案例">#</a></h1>
+<h2 id="连续签到">连续签到<a hidden class="anchor" aria-hidden="true" href="#连续签到">#</a></h2>
+<ul>
+<li>Key：cc_uid_1165894833417101(用户匿名ID)</li>
+<li>value：252(已签到天数)</li>
+<li>expireAt：后天的零点</li>
+</ul>
+<h2 id="消息通知">消息通知<a hidden class="anchor" aria-hidden="true" href="#消息通知">#</a></h2>
+<h3 id="消息队列lpush生产-rpop消费">消息队列(lpush生产 rpop消费)<a hidden class="anchor" aria-hidden="true" href="#消息队列lpush生产-rpop消费">#</a></h3>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/19/385525ebc2b08ec8b2dc0366a8005a59.jpg" alt="1"  />
+</p>
+<h4 id="代码实现">代码实现<a hidden class="anchor" aria-hidden="true" href="#代码实现">#</a></h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">ex04ListenList</span> = <span style="color:#e6db74">&#34;ex04_list_0&#34;</span> <span style="color:#75715e">// lpush ex04_list_0 AA BB
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Ex04Params Ex04的自定义函数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Ex04Params</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Ex04</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">eventLogger</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">ConcurrentEventLogger</span>{}
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// new一个并发执行器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">// routineNums是消费端的数量，多消费的场景，可以使用ConsumerPop
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">cInst</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">NewConcurrentRoutine</span>(<span style="color:#ae81ff">1</span>, <span style="color:#a6e22e">eventLogger</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 并发执行用户自定义函数work
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">cInst</span>.<span style="color:#a6e22e">Run</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">Ex04Params</span>{}, <span style="color:#a6e22e">ConsumerPop</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 按日志时间正序打印日志
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">eventLogger</span>.<span style="color:#a6e22e">PrintLogs</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// ex04ConsumerPop 使用rpop逐条消费队列中的信息，数据从队列中移除
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 生成端使用：lpush ex04_list_0 AA BB
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">ConsumerPop</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">cInstParam</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">CInstParams</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">routine</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">cInstParam</span>.<span style="color:#a6e22e">Routine</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">items</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">BRPop</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">ex04ListenList</span>).<span style="color:#a6e22e">Result</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">LogFormat</span>(<span style="color:#a6e22e">routine</span>, <span style="color:#e6db74">&#34;读取文章[%s]标题、正文，发送到ES更新索引&#34;</span>, <span style="color:#a6e22e">items</span>[<span style="color:#ae81ff">1</span>]))
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 将文章内容推送到ES
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#ae81ff">1</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="涉及到的数据结构quicklist">涉及到的数据结构(Quicklist)<a hidden class="anchor" aria-hidden="true" href="#涉及到的数据结构quicklist">#</a></h3>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/19/d302aeddbe6dc13736cd9807e97fa58e.jpg" alt="Quicklist"  />
+
+<img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/19/3f22dc8ef8526118abdff4f05d7288e8.jpg" alt="Listpack"  />
+</p>
+<h2 id="计数">计数<a hidden class="anchor" aria-hidden="true" href="#计数">#</a></h2>
+<h3 id="可通过hash结构存储">可通过hash结构存储<a hidden class="anchor" aria-hidden="true" href="#可通过hash结构存储">#</a></h3>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/19/f5aeb14168ccfef3b44c39f1bd10fdf5.jpg" alt="count"  />
+</p>
+<h3 id="代码实现-1">代码实现<a hidden class="anchor" aria-hidden="true" href="#代码实现-1">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 通过管道技术一次性存储
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">InitUserCounter</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// pipe 管道技术，批量执行命令
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">pipe</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">Pipeline</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">userCounters</span> <span style="color:#f92672">:=</span> []<span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>]<span style="color:#66d9ef">interface</span>{}{
+</span></span><span style="display:flex;"><span>		{<span style="color:#e6db74">&#34;user_id&#34;</span>: <span style="color:#e6db74">&#34;1556564194374926&#34;</span>, <span style="color:#e6db74">&#34;got_digg_count&#34;</span>: <span style="color:#ae81ff">10693</span>, <span style="color:#e6db74">&#34;got_view_count&#34;</span>: <span style="color:#ae81ff">2238438</span>, <span style="color:#e6db74">&#34;followee_count&#34;</span>: <span style="color:#ae81ff">176</span>, <span style="color:#e6db74">&#34;follower_count&#34;</span>: <span style="color:#ae81ff">9895</span>, <span style="color:#e6db74">&#34;follow_collect_set_count&#34;</span>: <span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#34;subscribe_tag_count&#34;</span>: <span style="color:#ae81ff">95</span>},
+</span></span><span style="display:flex;"><span>		{<span style="color:#e6db74">&#34;user_id&#34;</span>: <span style="color:#e6db74">&#34;1111&#34;</span>, <span style="color:#e6db74">&#34;got_digg_count&#34;</span>: <span style="color:#ae81ff">19</span>, <span style="color:#e6db74">&#34;got_view_count&#34;</span>: <span style="color:#ae81ff">4</span>},
+</span></span><span style="display:flex;"><span>		{<span style="color:#e6db74">&#34;user_id&#34;</span>: <span style="color:#e6db74">&#34;2222&#34;</span>, <span style="color:#e6db74">&#34;got_digg_count&#34;</span>: <span style="color:#ae81ff">1238</span>, <span style="color:#e6db74">&#34;follower_count&#34;</span>: <span style="color:#ae81ff">379</span>},
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">counter</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">userCounters</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">uid</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">strconv</span>.<span style="color:#a6e22e">ParseInt</span>(<span style="color:#a6e22e">counter</span>[<span style="color:#e6db74">&#34;user_id&#34;</span>].(<span style="color:#66d9ef">string</span>), <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">64</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">key</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">GetUserCounterKey</span>(<span style="color:#a6e22e">uid</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">rw</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">pipe</span>.<span style="color:#a6e22e">Del</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">key</span>).<span style="color:#a6e22e">Result</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;del %s, rw=%d\n&#34;</span>, <span style="color:#a6e22e">key</span>, <span style="color:#a6e22e">rw</span>)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">pipe</span>.<span style="color:#a6e22e">HMSet</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">key</span>, <span style="color:#a6e22e">counter</span>).<span style="color:#a6e22e">Result</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;设置 uid=%d, key=%s\n&#34;</span>, <span style="color:#a6e22e">uid</span>, <span style="color:#a6e22e">key</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 批量执行上面for循环设置好的hmset命令
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">pipe</span>.<span style="color:#a6e22e">Exec</span>(<span style="color:#a6e22e">ctx</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> { <span style="color:#75715e">// 报错后进行一次额外尝试
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">pipe</span>.<span style="color:#a6e22e">Exec</span>(<span style="color:#a6e22e">ctx</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="涉及到的数据结构hash">涉及到的数据结构(Hash)<a hidden class="anchor" aria-hidden="true" href="#涉及到的数据结构hash">#</a></h3>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/0abac11c890f182e7c5c70f85377d2db.jpg" alt="rehash pro"  />
+
+渐进式rehash: KV过多时, 直接迁移会阻塞请求, 因此将迁移平摊到用户访问的过程中, 确保内存使用能够平滑过渡</p>
+<h2 id="排行榜">排行榜<a hidden class="anchor" aria-hidden="true" href="#排行榜">#</a></h2>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/20e87d5f7ce5f6471947b62ef34a0694.jpg" alt="score"  />
+</p>
+<h3 id="代码实现-2">代码实现<a hidden class="anchor" aria-hidden="true" href="#代码实现-2">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">InitUserScore</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">initList</span> <span style="color:#f92672">:=</span> []<span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">Z</span>{
+</span></span><span style="display:flex;"><span>		{<span style="color:#a6e22e">Member</span>: <span style="color:#e6db74">&#34;user1&#34;</span>, <span style="color:#a6e22e">Score</span>: float64(<span style="color:#a6e22e">GetScoreWithTime</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#ae81ff">10</span>))},
+</span></span><span style="display:flex;"><span>		{<span style="color:#a6e22e">Member</span>: <span style="color:#e6db74">&#34;user2&#34;</span>, <span style="color:#a6e22e">Score</span>: float64(<span style="color:#a6e22e">GetScoreWithTime</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#ae81ff">232</span>))},
+</span></span><span style="display:flex;"><span>		{<span style="color:#a6e22e">Member</span>: <span style="color:#e6db74">&#34;user3&#34;</span>, <span style="color:#a6e22e">Score</span>: float64(<span style="color:#a6e22e">GetScoreWithTime</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#ae81ff">129</span>))},
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 清空榜单
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">Del</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">Ex062RankKey</span>).<span style="color:#a6e22e">Err</span>(); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">nums</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">ZAdd</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">Ex062RankKey</span>, <span style="color:#a6e22e">initList</span><span style="color:#f92672">...</span>).<span style="color:#a6e22e">Result</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;初始化榜单Item数量:%d\n&#34;</span>, <span style="color:#a6e22e">nums</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">lastItem</span> <span style="color:#f92672">:=</span> []<span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">Z</span>{
+</span></span><span style="display:flex;"><span>		{<span style="color:#a6e22e">Member</span>: <span style="color:#e6db74">&#34;user4&#34;</span>, <span style="color:#a6e22e">Score</span>: float64(<span style="color:#a6e22e">GetScoreWithTime</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#ae81ff">232</span>))},
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">nums</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">ZAdd</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">Ex062RankKey</span>, <span style="color:#a6e22e">lastItem</span><span style="color:#f92672">...</span>).<span style="color:#a6e22e">Result</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;初始化榜单Item数量:%d\n&#34;</span>, <span style="color:#a6e22e">nums</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="涉及到的数据结构zsetzskiplist跳表">涉及到的数据结构(zset/zskiplist跳表)<a hidden class="anchor" aria-hidden="true" href="#涉及到的数据结构zsetzskiplist跳表">#</a></h3>
+<h4 id="skiplist跳表">skiplist跳表<a hidden class="anchor" aria-hidden="true" href="#skiplist跳表">#</a></h4>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/ae012bfbd57181c7a3704fc816e6a041.jpg" alt="Skiplist"  />
+
+对有序链表进行优化(空间换时间)，使查找效率可以达到 O(log n)，接近二叉搜索树</p>
+<h4 id="zskiplist">zskiplist<a hidden class="anchor" aria-hidden="true" href="#zskiplist">#</a></h4>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/102c1a8c5a84213ffdbe4ddb1610c7b9.jpg" alt="zskiplist"  />
+
+结合dict实现</p>
+<h2 id="限流">限流<a hidden class="anchor" aria-hidden="true" href="#限流">#</a></h2>
+<h3 id="代码实现-3">代码实现<a hidden class="anchor" aria-hidden="true" href="#代码实现-3">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">work</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">cInstParam</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">CInstParams</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ... 省略变量声明 ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 获取当前时间窗口的 key
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">key</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">ex03LimitKey</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>())
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 计数器增加
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">currentQPS</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">Incr</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">key</span>).<span style="color:#a6e22e">Result</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">Nil</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 重试一次
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">Incr</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">key</span>).<span style="color:#a6e22e">Err</span>()
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>            panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 3. 限流判断
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">currentQPS</span> &gt; <span style="color:#a6e22e">maxQPS</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 超过限制的处理逻辑
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 正常放行的处理逻辑
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="分布式锁">分布式锁<a hidden class="anchor" aria-hidden="true" href="#分布式锁">#</a></h2>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/7e146985f7d3e122fac29e9969658eb5.jpg" alt="sync"  />
+
+并发场景，要求一次只能有一个协程运行，执行完成后，其他等待中的协程才能执行</p>
+<ul>
+<li>通过redis的setnx实现, 利用如下两个特性</li>
+<li>Redis 是单线程执行命令</li>
+<li>setnx 只有未设置过才能执行成功</li>
+</ul>
+<h3 id="代码实现-4">代码实现<a hidden class="anchor" aria-hidden="true" href="#代码实现-4">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">resourceKey</span> = <span style="color:#e6db74">&#34;syncKey&#34;</span>      <span style="color:#75715e">// 分布式锁的key
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">exp</span> = <span style="color:#ae81ff">800</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Millisecond</span> <span style="color:#75715e">// 锁的过期时间 避免死锁
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 核心工作函数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">work</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">cInstParam</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">CInstParams</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">routine</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">cInstParam</span>.<span style="color:#a6e22e">Routine</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 确保最后释放锁
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">releaseLock</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">routine</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. 尝试获取锁（使用 SetNX 命令）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">acquired</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">SetNX</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">resourceKey</span>, <span style="color:#a6e22e">routine</span>, <span style="color:#a6e22e">exp</span>).<span style="color:#a6e22e">Result</span>()
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">acquired</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 2. 获取锁成功，执行业务逻辑
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#a6e22e">doSomething</span>()
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 3. 获取锁失败，等待后重试
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#ae81ff">100</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Millisecond</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 释放锁
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">releaseLock</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">routine</span> <span style="color:#66d9ef">int</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 检查当前锁是否属于自己
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">routineMark</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">Get</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">resourceKey</span>).<span style="color:#a6e22e">Result</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">strconv</span>.<span style="color:#a6e22e">FormatInt</span>(int64(<span style="color:#a6e22e">routine</span>), <span style="color:#ae81ff">10</span>) <span style="color:#f92672">!=</span> <span style="color:#a6e22e">routineMark</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 不是自己的锁，不能删除
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        panic(<span style="color:#e6db74">&#34;cannot delete other&#39;s lock&#34;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 删除锁
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">Del</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">resourceKey</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="以上代码只是体验setnx的特性不是高可用的分布式锁实现存在如下问题">以上代码只是体验SetNX的特性，不是高可用的分布式锁实现，存在如下问题<a hidden class="anchor" aria-hidden="true" href="#以上代码只是体验setnx的特性不是高可用的分布式锁实现存在如下问题">#</a></h4>
+<ul>
+<li>业务超时解锁，导致并发问题。业务执行时间超过锁超时时间</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 解决方案 实现锁的续期机制
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">acquireLockWithRenewal</span>(<span style="color:#a6e22e">key</span>, <span style="color:#a6e22e">value</span> <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">lockTimeout</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">30</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 获取锁
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">success</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">SetNX</span>(<span style="color:#a6e22e">key</span>, <span style="color:#a6e22e">value</span>, <span style="color:#a6e22e">lockTimeout</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> !<span style="color:#a6e22e">success</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 创建续期器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">ticker</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">NewTicker</span>(<span style="color:#a6e22e">lockTimeout</span> <span style="color:#f92672">/</span> <span style="color:#ae81ff">3</span>)  <span style="color:#75715e">// 每10秒续期一次
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">stopChan</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">bool</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">ticker</span>.<span style="color:#a6e22e">Stop</span>()
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">ticker</span>.<span style="color:#a6e22e">C</span>: <span style="color:#75715e">// 每10秒触发一次
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#75715e">// 3. 定期续期 先检测当前锁是否属于自己
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">isLockHeld</span>(<span style="color:#a6e22e">key</span>, <span style="color:#a6e22e">value</span>) {
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">RedisClient</span>.<span style="color:#a6e22e">Expire</span>(<span style="color:#a6e22e">key</span>, <span style="color:#a6e22e">lockTimeout</span>)
+</span></span><span style="display:flex;"><span>                } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">stopChan</span>: <span style="color:#75715e">// 收到停止信号
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 4. 执行业务逻辑
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">doSomething</span>()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 5. 停止续期
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">stopChan</span> <span style="color:#f92672">&lt;-</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>redis主备切换临界点问题。主备切换后，A持有的锁还未同步到新的主节点时，B可在新主节点获取锁，导致并发问题</li>
+</ul>
+<pre tabindex="0"><code>时间轴    客户端A          主节点          从节点          客户端B
+  |
+  |    获取锁成功    --&gt;   写入锁
+  |                        |
+  |                    故障发生        
+  |                        |
+  |                        x     --&gt;    升级为主节点
+  |                                          ↑ 
+  |                                     获取锁成功    &lt;--  请求锁
+  |    
+  ↓    (此时A和B都认为自己持有锁)
+</code></pre><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 解决方案
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 使用 Redis Cluster 或 Sentinel
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">SafeDistributedLock</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">client</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">ClusterClient</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">key</span>    <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">l</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">SafeDistributedLock</span>) <span style="color:#a6e22e">AcquireLock</span>(<span style="color:#a6e22e">value</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">expiry</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Duration</span>) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 使用 Lua 脚本确保原子性
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">script</span> <span style="color:#f92672">:=</span> <span style="color:#e6db74">`
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        if redis.call(&#34;set&#34;, KEYS[1], ARGV[1], &#34;NX&#34;, &#34;PX&#34;, ARGV[2]) then
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            return 1
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        else
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            return 0
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        end
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    `</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 在集群环境中执行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">result</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">Eval</span>(<span style="color:#a6e22e">script</span>, []<span style="color:#66d9ef">string</span>{<span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">key</span>}, <span style="color:#a6e22e">value</span>, <span style="color:#a6e22e">expiry</span>.<span style="color:#a6e22e">Milliseconds</span>()).<span style="color:#a6e22e">Result</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">result</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>redis集群脑裂，导致出现多个主节点</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 解决方案
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">example</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 创建多个Redis实例的客户端
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">lock</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">SafeDistributedLock</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">clients</span>: []<span style="color:#f92672">*</span><span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">Client</span>{
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">NewClient</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">Options</span>{<span style="color:#a6e22e">Addr</span>: <span style="color:#e6db74">&#34;:6379&#34;</span>}),
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">NewClient</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">Options</span>{<span style="color:#a6e22e">Addr</span>: <span style="color:#e6db74">&#34;:6380&#34;</span>}),
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">NewClient</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">Options</span>{<span style="color:#a6e22e">Addr</span>: <span style="color:#e6db74">&#34;:6381&#34;</span>}),
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">NewClient</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">Options</span>{<span style="color:#a6e22e">Addr</span>: <span style="color:#e6db74">&#34;:6382&#34;</span>}),
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">NewClient</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">redis</span>.<span style="color:#a6e22e">Options</span>{<span style="color:#a6e22e">Addr</span>: <span style="color:#e6db74">&#34;:6383&#34;</span>}),
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">quorum</span>: <span style="color:#ae81ff">3</span>,  <span style="color:#75715e">// 需要至少3个节点同意
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">key</span>:    <span style="color:#e6db74">&#34;my_lock&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">value</span>:  <span style="color:#a6e22e">uuid</span>.<span style="color:#a6e22e">New</span>().<span style="color:#a6e22e">String</span>(),
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">expiry</span>: <span style="color:#ae81ff">30</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>,
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">lock</span>.<span style="color:#a6e22e">Lock</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">lock</span>.<span style="color:#a6e22e">Unlock</span>()
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 执行业务逻辑
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">doSomething</span>()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h1 id="redis使用注意事项">Redis使用注意事项<a hidden class="anchor" aria-hidden="true" href="#redis使用注意事项">#</a></h1>
+<h2 id="大key">大Key<a hidden class="anchor" aria-hidden="true" href="#大key">#</a></h2>
+<h3 id="定义">定义<a hidden class="anchor" aria-hidden="true" href="#定义">#</a></h3>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/0b334309a87d8cdb745314c225816a90.jpg" alt="Bigkey"  />
+</p>
+<h3 id="危害">危害<a hidden class="anchor" aria-hidden="true" href="#危害">#</a></h3>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/199affc42bcb48856ef3b0c29ac06953.jpg" alt="Redis"  />
+</p>
+<ul>
+<li>读取成本高</li>
+<li>容易导致慢查询(过期、删除)</li>
+<li>主从复制异常，服务阻塞 无法响应正常请求</li>
+</ul>
+<h3 id="解决方案">解决方案<a hidden class="anchor" aria-hidden="true" href="#解决方案">#</a></h3>
+<ul>
+<li>拆分
+<img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/c7efe30e355e0b4078b7c5194cf344ee.jpg" alt="split1"  />
+</li>
+<li>压缩
+<ul>
+<li>将 valuel 压缩后写入 redis，读取时解压后再使用。压缩算法可以是 gzip、snappy、lz4 等。通常情况下，一个压缩算法压缩率高、则解压耗时就长。需要对实际数据进行测试后，选择一个合适的算法</li>
+<li>如果存储的是 JSON 字符串，可以考虑使用 MessagePack 进行序列化</li>
+</ul>
+</li>
+<li>集合类结构 hash、list、set
+<ul>
+<li>拆分：可以用 hash 取余、位掩码的方式决定放在哪个 Key 中</li>
+<li>区分冷热：如榜单列表场景使用 zset，只缓存前 10 页数据，后续数据走 db</li>
+</ul>
+</li>
+</ul>
+<h2 id="热key">热Key<a hidden class="anchor" aria-hidden="true" href="#热key">#</a></h2>
+<h3 id="定义-1">定义<a hidden class="anchor" aria-hidden="true" href="#定义-1">#</a></h3>
+<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/88e30d46839215f5a7d7d8f6deeead5e.jpg" alt="HotKey"  />
+
+用户访问一个 Key 的 QPS 特别高，导致 Server 实例出现 CPU 负载突增或者不均的情况</p>
+<h3 id="解决方案-1">解决方案<a hidden class="anchor" aria-hidden="true" href="#解决方案-1">#</a></h3>
+<ul>
+<li>设置 Localcache
+<img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/f8bb7e54e91927f41d50c470c9688cf3.jpg" alt="localCache"  />
+
+在访问 Redis 前，在业务服务侧设置 Localcache，降低访问 Redis 的 QPS。LocalCache 中缓存过期或未命中，则从 Redist 中将数据更新到 LocalCache。Java 的 Guava、Golang 的 Bigcache 就是这类 LocalCache</li>
+<li>拆分
+<img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/774e31fb8ba8a78d4fdf4ac38f305df5.jpg" alt="split2"  />
+
+将 key : value 这一个热 Key 复制写入多份，例如 key1 : value,key2 : value，访问的时候访问多个 key，但 value 是同一个，以此将 qps 分散到不同实例上，降低负载。代价是，更新时需要更新多个 key，存在数据短暂不一致的风险</li>
+<li>使用 Redis 代理的热 Key 承载能力(综合以上两个解决方案)
+<img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/ac3bf0981179e95f40f211d2581ed8bd.jpg" alt="Proxy"  />
+
+字节跳动的 Redis 访问代理就具备热 Key 承载能力。本质上是结合了“热 Key 发现”、“LocalCache”两个功能</li>
+</ul>
+<h2 id="慢查询场景">慢查询场景<a hidden class="anchor" aria-hidden="true" href="#慢查询场景">#</a></h2>
+<h3 id="容易导致慢查询的操作">容易导致慢查询的操作<a hidden class="anchor" aria-hidden="true" href="#容易导致慢查询的操作">#</a></h3>
+<ul>
+<li>批量操作(例如前面提到的pipe)一次性传入过多的 key/value，如 mset/hmset/sadd/zadd 等 O(n)操作建议单批次不要超过 100，超过 100 之后性能下降明显</li>
+<li>Zset 大部分命令都是 O(log(n))，当大小超过 5k 以上时，简单的 zadd/zrem 也可能导致慢查询</li>
+<li>操作的单个 vaue 过大，超过 10KB。也即，避免使用大 Key</li>
+<li>对大 key 的 delete/expire 操作也可能导致慢查询，Redis4.0 之前不支持异步删除 unlink，大 key 删除会阻塞 Redis</li>
+</ul>
+<h2 id="缓存穿透缓存雪崩">缓存穿透、缓存雪崩<a hidden class="anchor" aria-hidden="true" href="#缓存穿透缓存雪崩">#</a></h2>
+<h3 id="缓存穿透热点数据查询绕过缓存直接查询数据库">缓存穿透(热点数据查询绕过缓存，直接查询数据库)<a hidden class="anchor" aria-hidden="true" href="#缓存穿透热点数据查询绕过缓存直接查询数据库">#</a></h3>
+<h4 id="危害-1">危害<a hidden class="anchor" aria-hidden="true" href="#危害-1">#</a></h4>
+<ul>
+<li>查询一个一定不存在的数据
+<ul>
+<li>通常不会缓存不存在的数据，这类查询请求都会直接打到 db，如果有系统 bug 或人为攻击，那么容易导致 db 响应慢甚至宕机</li>
+</ul>
+</li>
+<li>缓存过期时
+<ul>
+<li>在高并发场景下，一个热 key 如果过期，会有大量请求同时击穿至 db，容易影响 db 性能和稳定</li>
+<li>同一时间有大量 key 集中过期时，也会导致大量请求落到 db 上，导致查询变慢，甚至出现 db 无法响应新的查询</li>
+</ul>
+</li>
+</ul>
+<h4 id="解决方案-2">解决方案<a hidden class="anchor" aria-hidden="true" href="#解决方案-2">#</a></h4>
+<ul>
+<li>缓存空值
+<ul>
+<li>如一个不存在的 userlD。这个 id 在缓存和数据库中都不存在。则可以缓存一个空值，下次再查缓存直接反空值</li>
+</ul>
+</li>
+<li>布隆过滤器
+<ul>
+<li>通过 bloom filter 算法来存储合法 Key，得益于该算法超高的压缩率，只需占用极小的空间就能存储大量 key 值</li>
+</ul>
+</li>
+</ul>
+<h3 id="缓存雪崩大量缓存同时过期">缓存雪崩(大量缓存同时过期)<a hidden class="anchor" aria-hidden="true" href="#缓存雪崩大量缓存同时过期">#</a></h3>
+<h4 id="解决方案-3">解决方案<a hidden class="anchor" aria-hidden="true" href="#解决方案-3">#</a></h4>
+<ul>
+<li>缓存空值
+<ul>
+<li>将缓存失效时间分散开，比如在原有的失效时间基础上增加一个随机值，例如不同 Key 过期时间可以设置为 10 分 1 秒过期，10 分 23 秒过期，10 分 8 秒过期。单位秒部分就是随机时间，这样过期时间就分散了</li>
+<li>对于热点数据，过期时间尽量设置得长一些，冷门的数据可以相对设置过期时间短一些</li>
+</ul>
+</li>
+<li>使用缓存集群，避免单机宕机造成的缓存雪崩</li>
+</ul>
+
+
+  </div>
 
   <footer class="post-footer">
     <ul class="post-tags">
@@ -206,15 +724,10 @@
       <li><a href="https://blog.ziven.site/tags/%E5%AD%97%E8%8A%82%E9%9D%92%E8%AE%AD%E8%90%A5/">字节青训营</a></li>
     </ul>
 <nav class="paginav">
-  <a class="prev" href="https://blog.ziven.site/posts/pprof/">
-    <span class="title">« Prev</span>
-    <br>
-    <span>浅谈Go的性能调优</span>
-  </a>
-  <a class="next" href="https://blog.ziven.site/posts/asynq-go/">
+  <a class="next" href="https://blog.ziven.site/posts/microservice-framework/">
     <span class="title">Next »</span>
     <br>
-    <span>关于Asynq任务队列的学习</span>
+    <span>浅谈微服务架构</span>
   </a>
 </nav>
 
@@ -223,7 +736,7 @@
     </main>
     
 <footer class="footer">
-        <span>&copy; 2024 <a href="https://blog.ziven.site/">Tim&#39;s Blog</a></span> · 
+        <span>&copy; 2025 <a href="https://blog.ziven.site/">Tim&#39;s Blog</a></span> · 
 
     <span>
         Powered by
