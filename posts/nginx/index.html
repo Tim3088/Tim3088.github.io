@@ -59,8 +59,8 @@
 <meta property="og:description" content="Nginx入门" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://blog2.ziven.site/posts/nginx/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2025-01-25T04:00:22+08:00" />
-<meta property="article:modified_time" content="2025-01-25T04:00:22+08:00" />
+<meta property="article:published_time" content="2025-01-25T02:00:22+08:00" />
+<meta property="article:modified_time" content="2025-01-25T02:00:22+08:00" />
 
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="浅谈Nginx"/>
@@ -100,8 +100,8 @@
   "articleBody": "使用背景 平台用户量增加，并发量慢慢增大，一台服务器满足不了需求 于是横向扩展增加代理服务器，通过代理服务器来转发和处理请求 作用 正向代理 特点 客户端知道目标服务器，但无法直接访问 需要通过代理服务器访问目标服务器 代理服务器代替客户端向目标服务器发送请求 应用场景 内网访问外网 隐藏客户端真实IP 配置示例 server { listen 80; # 监听80端口 resolver 8.8.8.8; # 设置DNS解析器，解析客户端中请求的域名 location / { # 将请求转发到客户端实际要访问的服务器 # $http_host: 获取客户端请求头中的 Host 值（目标服务器的域名） # $request_uri: 获取客户端请求的 URI（包含参数的完整路径） proxy_pass http://$http_host$request_uri; # 设置请求头的 Host 为客户端请求的原始 Host # 确保目标服务器能够正确识别请求的域名 proxy_set_header Host $http_host; # 配置代理服务器的缓冲区 # 设置256个大小为4k的缓冲区 # 用于存储后端服务器的响应数据 proxy_buffers 256 4k; # 设置临时文件的最大大小为0 # 禁止将后端服务器的响应写入临时文件 proxy_max_temp_file_size 0; # 设置连接超时时间为30秒 # 与后端服务器建立连接的最大等待时间 proxy_connect_timeout 30; # 设置发送超时时间为60秒 # 向后端服务器发送请求的最大等待时间 proxy_send_timeout 60; # 设置读取超时时间为60秒 # 从后端服务器读取响应的最大等待时间 proxy_read_timeout 60; } } 反向代理 特点 客户端不知道真实的服务器 请求先到达代理服务器 代理服务器再转发给内部的真实服务器 作用 安全性：隐藏真实服务器 提升性能：可以启用缓存 统一入口：便于维护 配置示例 server { listen 80; # 监听80端口 server_name example.com; # 绑定的域名 location / { # 将请求转发到后端服务器 proxy_pass http://backend-server:8080; # 设置请求头 Host，用于后端服务器识别请求的原始域名 # $host 变量包含原始请求中的 host 名称 proxy_set_header Host $host; # 设置请求头 X-Real-IP，用于后端服务器获取访问者的真实 IP # $remote_addr 变量包含客户端的 IP 地址 proxy_set_header X-Real-IP $remote_addr; # 设置请求头 X-Forwarded-For，用于记录请求经过的代理服务器链路 # $proxy_add_x_forwarded_for 变量包含客户端 IP 和所有经过的代理服务器 IP # 格式如：client_ip, proxy1_ip, proxy2_ip proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; # 设置请求头 X-Forwarded-Proto，用于告诉后端服务器原始请求的协议类型（如 http 或 https） proxy_set_header X-Forwarded-Proto $scheme; } } 负载均衡 内置策略 轮询 特点 按顺序逐一分配请求 适合服务器配置相近的场景 配置示例 upstream backend { server 192.168.1.10:8080; server 192.168.1.11:8080; server 192.168.1.12:8080; } server { listen 80; server_name example.com; location / { proxy_pass http://backend; } } 加权轮询 特点：按权重分配请求 配置示例 upstream backend { server 192.168.1.10:8080 weight=3; # 权重为3 server 192.168.1.11:8080 weight=2; # 权重为2 server 192.168.1.12:8080 weight=1; # 权重为1 } Iphash 特点 根据客户端IP进行哈希分配 可以保证同一客户端总是访问同一服务器 适合需要会话保持的场景 建议采用Redis缓存session，此策略可用性不高 配置示例 upstream backend { ip_hash; server 192.168.1.10:8080; server 192.168.1.11:8080; server 192.168.1.12:8080; } 扩展策略 …（待补充）\n动静分离 静态资源（图片、CSS、JS等）直接由Nginx处理 动态请求转发到后端服务器处理 优势 减轻后端服务器压力 提高静态资源访问速度 方便进行缓存管理 配置示例 server { listen 80; server_name example.com; root /www/website; # 静态资源配置 location ~ .\\.(jpg|jpeg|png|gif|ico|css|js)$ { root /www/static; expires 30d; # 缓存30天 access_log off; # 关闭访问日志 } # 图片单独存放 location /images/ { root /www/static; autoindex on; # 开启目录浏览 expires 7d; # 缓存7天 } # CSS和JS文件 location ~ .\\.(css|js)$ { root /www/static; expires 1d; # 缓存1天 } # 动态请求转发到后端服务器 location / { proxy_pass http://backend; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; # 禁止缓存动态内容 add_header Cache-Control no-store; } } 参考资料: Nginx快速入门\n",
   "wordCount" : "317",
   "inLanguage": "en",
-  "datePublished": "2025-01-25T04:00:22+08:00",
-  "dateModified": "2025-01-25T04:00:22+08:00",
+  "datePublished": "2025-01-25T02:00:22+08:00",
+  "dateModified": "2025-01-25T02:00:22+08:00",
   "author":[{
     "@type": "Person",
     "name": "Ziven"
@@ -188,7 +188,7 @@
     <h1 class="post-title entry-hint-parent">
       浅谈Nginx
     </h1>
-    <div class="post-meta"><span title='2025-01-25 04:00:22 +0800 +0800'>January 25, 2025</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;317 words&nbsp;·&nbsp;Ziven
+    <div class="post-meta"><span title='2025-01-25 02:00:22 +0800 +0800'>January 25, 2025</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;317 words&nbsp;·&nbsp;Ziven
 
 </div>
   </header> <div class="toc">
