@@ -246,7 +246,7 @@
 </div>
 
   <div class="post-content"><h1 id="微服务架构介绍">微服务架构介绍<a hidden class="anchor" aria-hidden="true" href="#微服务架构介绍">#</a></h1>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/18/56d69360a1e5b66e152b80648117c23b.jpg" alt="概览"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e6%a6%82%e8%a7%88.jpg" alt="概览"  />
 </p>
 <h2 id="优势与劣势">优势与劣势<a hidden class="anchor" aria-hidden="true" href="#优势与劣势">#</a></h2>
 <ul>
@@ -302,7 +302,7 @@
 </ul>
 <h1 id="微服务架构原理及特征">微服务架构原理及特征<a hidden class="anchor" aria-hidden="true" href="#微服务架构原理及特征">#</a></h1>
 <h2 id="核心概念">核心概念<a hidden class="anchor" aria-hidden="true" href="#核心概念">#</a></h2>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/018b4d19ad77b4bee7154fefc0156408.jpg" alt="核心概念"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e6%a0%b8%e5%bf%83%e6%a6%82%e5%bf%b5.jpg" alt="核心概念"  />
 </p>
 <ul>
 <li>服务(service)
@@ -327,7 +327,7 @@
 </ol>
 <ul>
 <li>基本思想：增加一个统一的服务注册中心，用于存储服务名到服务实例之间的映射关系
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/3490180ff02b9c15c83f1e4acece113c.jpg" alt="服务注册"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e6%9c%8d%e5%8a%a1%e6%b3%a8%e5%86%8c.jpg" alt="服务注册"  />
 </li>
 </ul>
 <ol start="2">
@@ -337,27 +337,27 @@
 <li>下线过程
 <ul>
 <li>删除服务注册中心中的对应实例记录
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/3fa4e5a4f822e5c6213ea428eef5c1a7.jpg" alt="下线1"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e4%b8%8b%e7%ba%bf1.jpg" alt="下线1"  />
 </li>
 <li>删除记录后对应实例中无流量，下线实例
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/878cc0850e921cb96a28bdb772704494.jpg" alt="下线2"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e4%b8%8b%e7%ba%bf2.jpg" alt="下线2"  />
 </li>
 </ul>
 </li>
 <li>上线过程(和下线实例过程相反)
 <ul>
 <li>在对应服务中上线实例，并进行健康检查(确保能够处理请求)
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/51cf0bd97a16fd04105a9822bc645466.jpg" alt="上线1"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e4%b8%8a%e7%ba%bf1.jpg" alt="上线1"  />
 </li>
 <li>将实例注册到服务注册中心
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/056adc72db8ed2971ee1ad1702d3d28c.jpg" alt="上线2"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e4%b8%8a%e7%ba%bf2.jpg" alt="上线2"  />
 </li>
 <li>流量恢复</li>
 </ul>
 </li>
 </ul>
 <h2 id="流量特征">流量特征<a hidden class="anchor" aria-hidden="true" href="#流量特征">#</a></h2>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/b178a0b6cb7048b0a2d8fee360e34342.jpg" alt="流量特征"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e6%b5%81%e9%87%8f%e7%89%b9%e5%be%81.jpg" alt="流量特征"  />
 </p>
 <ul>
 <li>统一网关入口</li>
@@ -371,26 +371,26 @@
 <li>难点
 <ul>
 <li>服务不可用
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/26f3a3a7396f0461c2cd4f529f8c8891.jpg" alt="服务不可用"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e6%9c%8d%e5%8a%a1%e4%b8%8d%e5%8f%af%e7%94%a8.jpg" alt="服务不可用"  />
 </li>
 <li>服务抖动
 <ul>
 <li>流量短暂消失，出现故障
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/3e181f55877b93b63125413f8b0d0479.jpg" alt="服务抖动"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e6%9c%8d%e5%8a%a1%e6%8a%96%e5%8a%a8.jpg" alt="服务抖动"  />
 </li>
 </ul>
 </li>
 <li>服务回滚
 <ul>
 <li>服务出现bug后及时回滚到无bug的服务状态
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/b4b6b2d806a89f8d5176dc849f26ee3c.jpg" alt="服务回滚"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e6%9c%8d%e5%8a%a1%e5%9b%9e%e6%bb%9a.jpg" alt="服务回滚"  />
 </li>
 </ul>
 </li>
 </ul>
 </li>
 <li>蓝绿部署
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/34e57d4590f54c7efbb0eb8f3f6c019a.jpg" alt="蓝绿部署"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e8%93%9d%e7%bb%bf%e9%83%a8%e7%bd%b2.jpg" alt="蓝绿部署"  />
 
 <ul>
 <li>将服务分成两个集群，分别先后发布，简单且稳定</li>
@@ -399,7 +399,7 @@
 </ul>
 </li>
 <li>灰度发布
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/e5b37b652db452b04b3012859bb56ace.jpg" alt="灰度发布"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e7%81%b0%e5%ba%a6%e5%8f%91%e5%b8%83.jpg" alt="灰度发布"  />
 
 <ul>
 <li>不断增加新的实例，逐步完成切换，使最终服务中都是新的实例</li>
@@ -413,13 +413,13 @@
 </li>
 </ul>
 <h2 id="流量治理">流量治理<a hidden class="anchor" aria-hidden="true" href="#流量治理">#</a></h2>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/a186f2afa59edbf50ef2cf5b3862fc5e.jpg" alt="流量治理"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e6%b5%81%e9%87%8f%e6%b2%bb%e7%90%86.jpg" alt="流量治理"  />
 </p>
 <ul>
 <li>微服务架构中，可以基于<strong>地区、集群、实例、请求</strong>等维度，对端到端流量的路由路径进行精确控制</li>
 </ul>
 <h2 id="负载均衡">负载均衡<a hidden class="anchor" aria-hidden="true" href="#负载均衡">#</a></h2>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/a30a99125218eaf6482bc60ecb93e663.jpg" alt="负载均衡"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1.jpg" alt="负载均衡"  />
 </p>
 <ul>
 <li>负载均衡（Load Balance）负责分配请求在每个下游实例上的分布</li>
@@ -450,28 +450,28 @@
 <li>微服务架构中典型的稳定性治理功能
 <ul>
 <li>限流
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/c585dc8f2e7cf9de67fd92703b9f16c1.jpg" alt="限流"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e9%99%90%e6%b5%81.jpg" alt="限流"  />
 
 <ul>
 <li>通过<strong>rate limit</strong>组件处理达到只处理部分QPS的功能</li>
 </ul>
 </li>
 <li>熔断
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/a8f3ed6a298744bea0427e4865614854.jpg" alt="熔断"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e7%86%94%e6%96%ad.jpg" alt="熔断"  />
 
 <ul>
 <li>通过<strong>curcuit breaker</strong>熔断器组件拒绝打到服务A的流量，并间断性地向服务B打请求，直到服务B恢复正常</li>
 </ul>
 </li>
 <li>过载保护
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/0f93d75eaa5c08fe94c9bd905591cb1c.jpg" alt="过载保护"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e8%bf%87%e8%bd%bd%e4%bf%9d%e6%8a%a4.jpg" alt="过载保护"  />
 
 <ul>
 <li>在服务过载时通过<strong>dynamic overload</strong>组件主动拒绝请求，防止服务宕机</li>
 </ul>
 </li>
 <li>降级
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/47fd8a03c11abf3ef152380003bddd1e.jpg" alt="降级"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e9%99%8d%e7%ba%a7.jpg" alt="降级"  />
 
 <ul>
 <li>服务负载过高时通过<strong>degrage</strong>组件只接收重要请求，拒绝优先级低的请求</li>
@@ -485,7 +485,7 @@
 <ul>
 <li>本地函数调用(无重试的必要)</li>
 <li>远程函数调用
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/f3a8571b1ba46b24119bd1ef89d65ddf.jpg" alt="远程函数调用"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e8%bf%9c%e7%a8%8b%e5%87%bd%e6%95%b0%e8%b0%83%e7%94%a8.jpg" alt="远程函数调用"  />
 </li>
 <li>可能存在的异常:
 <ul>
@@ -501,7 +501,7 @@
 <li>其他意义：
 <ul>
 <li>降低错误率
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/94fa2e10f882b7990a206e2dd8cba9b2.jpg" alt="重试"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e9%87%8d%e8%af%95.jpg" alt="重试"  />
 
 <ul>
 <li>可以将百分之一的失败通过重试两次降为万分之一，避免偶发错误</li>
@@ -533,7 +533,7 @@
 </ul>
 </li>
 <li>重试风暴
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/84e3f323acce773c17e9d1166c7a2baa.jpg" alt="重试风暴"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e9%87%8d%e8%af%95%e9%a3%8e%e6%9a%b4.jpg" alt="重试风暴"  />
 
 <ul>
 <li>随着调用链路的深入，重试次数指数级增长，可能引发雪崩异常</li>
@@ -548,7 +548,7 @@
 <h2 id="重试的策略">重试的策略<a hidden class="anchor" aria-hidden="true" href="#重试的策略">#</a></h2>
 <ul>
 <li>限制重试比例
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/457593d4f4952d126118bd0cb34d4115.jpg" alt="限制重试比例"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e9%99%90%e5%88%b6%e9%87%8d%e8%af%95%e6%af%94%e4%be%8b.jpg" alt="限制重试比例"  />
 
 <ul>
 <li>设定一个重试比例阈值（例如 1%），重试次数占所有请求比例不超过该阈值</li>
@@ -556,7 +556,7 @@
 </ul>
 </li>
 <li>防止链路重试
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/4879a80ac651b223673a19c9f119e312.jpg" alt="防止链路重试"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/%e9%98%b2%e6%ad%a2%e9%93%be%e8%b7%af%e9%87%8d%e8%af%95.jpg" alt="防止链路重试"  />
 
 <ul>
 <li>链路层面的防重试风暴的核心是限制每层都发生重试，理想情况下只有最下一层发生重试</li>
@@ -564,7 +564,7 @@
 </ul>
 </li>
 <li>Hedged Requests
-<img loading="lazy" src="https://s1.imagehub.cc/images/2024/11/19/d46ba7bd06b7bac4cdda61727de28d18.jpg" alt="Hedged"  />
+<img loading="lazy" src="https://img.ziven.site/blog/microservice-framework/Hedged.jpg" alt="Hedged"  />
 
 <ul>
 <li>对于可能超时（或延时高）的请求，重新向另一个下游实例发送一个相同的请求，并等待先到达的响应，达到缩短服务延迟的效果</li>

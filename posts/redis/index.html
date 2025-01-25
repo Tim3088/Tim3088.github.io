@@ -320,7 +320,7 @@
 </ul>
 <h2 id="消息通知">消息通知<a hidden class="anchor" aria-hidden="true" href="#消息通知">#</a></h2>
 <h3 id="消息队列lpush生产-rpop消费">消息队列(lpush生产 rpop消费)<a hidden class="anchor" aria-hidden="true" href="#消息队列lpush生产-rpop消费">#</a></h3>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/19/385525ebc2b08ec8b2dc0366a8005a59.jpg" alt="1"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/%e6%b6%88%e6%81%af%e9%98%9f%e5%88%97.jpg" alt="消息队列"  />
 </p>
 <h4 id="代码实现">代码实现<a hidden class="anchor" aria-hidden="true" href="#代码实现">#</a></h4>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">ex04ListenList</span> = <span style="color:#e6db74">&#34;ex04_list_0&#34;</span> <span style="color:#75715e">// lpush ex04_list_0 AA BB
@@ -355,13 +355,13 @@
 </span></span><span style="display:flex;"><span>	}
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><h3 id="涉及到的数据结构quicklist">涉及到的数据结构(Quicklist)<a hidden class="anchor" aria-hidden="true" href="#涉及到的数据结构quicklist">#</a></h3>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/19/d302aeddbe6dc13736cd9807e97fa58e.jpg" alt="Quicklist"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/Quicklist.jpg" alt=""  />
 
-<img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/19/3f22dc8ef8526118abdff4f05d7288e8.jpg" alt="Listpack"  />
+<img loading="lazy" src="https://img.ziven.site/blog/redis/Listpack.jpg" alt=""  />
 </p>
 <h2 id="计数">计数<a hidden class="anchor" aria-hidden="true" href="#计数">#</a></h2>
 <h3 id="可通过hash结构存储">可通过hash结构存储<a hidden class="anchor" aria-hidden="true" href="#可通过hash结构存储">#</a></h3>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/19/f5aeb14168ccfef3b44c39f1bd10fdf5.jpg" alt="count"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/count.jpg" alt=""  />
 </p>
 <h3 id="代码实现-1">代码实现<a hidden class="anchor" aria-hidden="true" href="#代码实现-1">#</a></h3>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 通过管道技术一次性存储
@@ -397,11 +397,11 @@
 </span></span><span style="display:flex;"><span>	}
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><h3 id="涉及到的数据结构hash">涉及到的数据结构(Hash)<a hidden class="anchor" aria-hidden="true" href="#涉及到的数据结构hash">#</a></h3>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/0abac11c890f182e7c5c70f85377d2db.jpg" alt="rehash pro"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/rehashPro.jpg" alt=""  />
 
 渐进式rehash: KV过多时, 直接迁移会阻塞请求, 因此将迁移平摊到用户访问的过程中, 确保内存使用能够平滑过渡</p>
 <h2 id="排行榜">排行榜<a hidden class="anchor" aria-hidden="true" href="#排行榜">#</a></h2>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/20e87d5f7ce5f6471947b62ef34a0694.jpg" alt="score"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/score.jpg" alt=""  />
 </p>
 <h3 id="代码实现-2">代码实现<a hidden class="anchor" aria-hidden="true" href="#代码实现-2">#</a></h3>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">InitUserScore</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) {
@@ -433,11 +433,11 @@
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><h3 id="涉及到的数据结构zsetzskiplist跳表">涉及到的数据结构(zset/zskiplist跳表)<a hidden class="anchor" aria-hidden="true" href="#涉及到的数据结构zsetzskiplist跳表">#</a></h3>
 <h4 id="skiplist跳表">skiplist跳表<a hidden class="anchor" aria-hidden="true" href="#skiplist跳表">#</a></h4>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/ae012bfbd57181c7a3704fc816e6a041.jpg" alt="Skiplist"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/Skiplist.jpg" alt=""  />
 
 对有序链表进行优化(空间换时间)，使查找效率可以达到 O(log n)，接近二叉搜索树</p>
 <h4 id="zskiplist">zskiplist<a hidden class="anchor" aria-hidden="true" href="#zskiplist">#</a></h4>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/102c1a8c5a84213ffdbe4ddb1610c7b9.jpg" alt="zskiplist"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/zskiplist.jpg" alt=""  />
 
 结合dict实现</p>
 <h2 id="限流">限流<a hidden class="anchor" aria-hidden="true" href="#限流">#</a></h2>
@@ -468,7 +468,7 @@
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><h2 id="分布式锁">分布式锁<a hidden class="anchor" aria-hidden="true" href="#分布式锁">#</a></h2>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/7e146985f7d3e122fac29e9969658eb5.jpg" alt="sync"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/sync.jpg" alt=""  />
 
 并发场景，要求一次只能有一个协程运行，执行完成后，其他等待中的协程才能执行</p>
 <ul>
@@ -618,10 +618,10 @@
 </span></span></code></pre></div><h1 id="redis使用注意事项">Redis使用注意事项<a hidden class="anchor" aria-hidden="true" href="#redis使用注意事项">#</a></h1>
 <h2 id="大key">大Key<a hidden class="anchor" aria-hidden="true" href="#大key">#</a></h2>
 <h3 id="定义">定义<a hidden class="anchor" aria-hidden="true" href="#定义">#</a></h3>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/0b334309a87d8cdb745314c225816a90.jpg" alt="Bigkey"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/Bigkey.jpg" alt=""  />
 </p>
 <h3 id="危害">危害<a hidden class="anchor" aria-hidden="true" href="#危害">#</a></h3>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/199affc42bcb48856ef3b0c29ac06953.jpg" alt="Redis"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/danger.jpg" alt=""  />
 </p>
 <ul>
 <li>读取成本高</li>
@@ -631,7 +631,7 @@
 <h3 id="解决方案">解决方案<a hidden class="anchor" aria-hidden="true" href="#解决方案">#</a></h3>
 <ul>
 <li>拆分
-<img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/c7efe30e355e0b4078b7c5194cf344ee.jpg" alt="split1"  />
+<img loading="lazy" src="https://img.ziven.site/blog/redis/split1.jpg" alt=""  />
 </li>
 <li>压缩
 <ul>
@@ -648,21 +648,21 @@
 </ul>
 <h2 id="热key">热Key<a hidden class="anchor" aria-hidden="true" href="#热key">#</a></h2>
 <h3 id="定义-1">定义<a hidden class="anchor" aria-hidden="true" href="#定义-1">#</a></h3>
-<p><img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/88e30d46839215f5a7d7d8f6deeead5e.jpg" alt="HotKey"  />
+<p><img loading="lazy" src="https://img.ziven.site/blog/redis/HotKey.jpg" alt=""  />
 
 用户访问一个 Key 的 QPS 特别高，导致 Server 实例出现 CPU 负载突增或者不均的情况</p>
 <h3 id="解决方案-1">解决方案<a hidden class="anchor" aria-hidden="true" href="#解决方案-1">#</a></h3>
 <ul>
 <li>设置 Localcache
-<img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/f8bb7e54e91927f41d50c470c9688cf3.jpg" alt="localCache"  />
+<img loading="lazy" src="https://img.ziven.site/blog/redis/localCache.jpg" alt=""  />
 
 在访问 Redis 前，在业务服务侧设置 Localcache，降低访问 Redis 的 QPS。LocalCache 中缓存过期或未命中，则从 Redist 中将数据更新到 LocalCache。Java 的 Guava、Golang 的 Bigcache 就是这类 LocalCache</li>
 <li>拆分
-<img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/774e31fb8ba8a78d4fdf4ac38f305df5.jpg" alt="split2"  />
+<img loading="lazy" src="https://img.ziven.site/blog/redis/split2.jpg" alt=""  />
 
 将 key : value 这一个热 Key 复制写入多份，例如 key1 : value,key2 : value，访问的时候访问多个 key，但 value 是同一个，以此将 qps 分散到不同实例上，降低负载。代价是，更新时需要更新多个 key，存在数据短暂不一致的风险</li>
 <li>使用 Redis 代理的热 Key 承载能力(综合以上两个解决方案)
-<img loading="lazy" src="https://s1.imagehub.cc/images/2025/01/20/ac3bf0981179e95f40f211d2581ed8bd.jpg" alt="Proxy"  />
+<img loading="lazy" src="https://img.ziven.site/blog/redis/Proxy.jpg" alt=""  />
 
 字节跳动的 Redis 访问代理就具备热 Key 承载能力。本质上是结合了“热 Key 发现”、“LocalCache”两个功能</li>
 </ul>
