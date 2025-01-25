@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>SpringBoot on Tim&#39;s Blog</title>
-    <link>https://blog.ziven.site/tags/springboot/</link>
+    <link>https://blog2.ziven.site/tags/springboot/</link>
     <description>Recent content in SpringBoot on Tim&#39;s Blog</description>
     <generator>Hugo -- 0.135.0</generator>
     <language>zh-cn</language>
     <lastBuildDate>Mon, 18 Nov 2024 20:21:18 +0800</lastBuildDate>
-    <atom:link href="https://blog.ziven.site/tags/springboot/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://blog2.ziven.site/tags/springboot/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Webflux流式响应</title>
-      <link>https://blog.ziven.site/posts/webflux/</link>
+      <link>https://blog2.ziven.site/posts/webflux/</link>
       <pubDate>Mon, 18 Nov 2024 20:21:18 +0800</pubDate>
-      <guid>https://blog.ziven.site/posts/webflux/</guid>
+      <guid>https://blog2.ziven.site/posts/webflux/</guid>
       <description>简单讲讲Webflux流式响应</description>
     </item>
   </channel>
