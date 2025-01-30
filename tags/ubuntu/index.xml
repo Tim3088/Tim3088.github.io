@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>SpringBoot on Tim&#39;s Blog</title>
-    <link>https://blog.ziven.site/tags/springboot/</link>
-    <description>Recent content in SpringBoot on Tim&#39;s Blog</description>
+    <title>Ubuntu on Tim&#39;s Blog</title>
+    <link>https://blog.ziven.site/tags/ubuntu/</link>
+    <description>Recent content in Ubuntu on Tim&#39;s Blog</description>
     <generator>Hugo -- 0.135.0</generator>
     <language>zh-cn</language>
     <lastBuildDate>Wed, 29 Jan 2025 06:00:22 +0800</lastBuildDate>
-    <atom:link href="https://blog.ziven.site/tags/springboot/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://blog.ziven.site/tags/ubuntu/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Ubuntu部署SpringBoot项目</title>
       <link>https://blog.ziven.site/posts/springboot-deploy/</link>
       <pubDate>Wed, 29 Jan 2025 06:00:22 +0800</pubDate>
       <guid>https://blog.ziven.site/posts/springboot-deploy/</guid>
       <description>记录第一次在Ubuntu上部署SpringBoot项目</description>
-    </item>
-    <item>
-      <title>Webflux流式响应</title>
-      <link>https://blog.ziven.site/posts/webflux/</link>
-      <pubDate>Mon, 18 Nov 2024 20:21:18 +0800</pubDate>
-      <guid>https://blog.ziven.site/posts/webflux/</guid>
-      <description>简单讲讲Webflux流式响应</description>
     </item>
   </channel>
 </rss>
