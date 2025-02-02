@@ -97,8 +97,8 @@
   "keywords": [
     "golang", "字节青训营"
   ],
-  "articleBody": "几个简单案例引出消息队列的定义 系统崩溃 解决方案：解耦 服务处理能力有限 解决方案：削峰 链路耗时长尾 解决方案：异步 消息队列(MQ)定义 本质是队列，需要支持高吞吐、高并发、高可用 常见消息队列 Kafka 基本概念 Topic：就像是一个信箱或文件夹，用于对消息进行分类管理，不同业务类型的消息应该发送到不同的 Topic 中 Cluster：物理集群，每个集群中可以建立多个不同的 Topic Producer：生产者，负责将业务消息发送到 Topic 中 Consumer：消费者，负责消费 Topic 中的消息 ConsumerGroup：消费者组，不同组 Consumer 消费进度互不干涉 Offset：消息在 partition 内的相对位置信息，可以理解为唯一 ID，在 partition 内部严格递增 ISR：与 Leader 副本保持同步的副本集合（包括 Leader 自己），副本都是\"可信赖\"的，能够及时同步 Leader 的数据，可用于Leader 故障时，只从 ISR 中选择新的 Leader 消息 Producer 批量发送 数据压缩 Broker 顺序写（末尾追加消息）提高写入效率，减少磁盘的磁头移动 二分法检索偏移量索引文件（找到小于目标offset的最大索引文件和位置） 零拷贝减少数据在内核空间和用户空间之间不必要的拷贝，提升了数据传输效率 Consumer 自动分配 实现负载均衡 高可用 弹性扩展 弊端 切换主从状态耗时长 迁移时带来的负载不均衡问题（为了解决IO问题却引入了新的IO问题） 无缓存机制 Controller 和 Coordinator 和 Broker 在同一进程中，大量 IO 会造成其性能下降 BMQ 架构 优势 与 Kafka 相比 流程 写 状态机 写入失败时重新找新节点 读 Wait：Consumer很多时，轮询次数也提高，通过时间窗口或者数据大小窗口决定返回时机，避免请求过于频繁，降低IO压力 Cache：命中时直接返回给Consumer 多机房部署 A机房宕机时能够将流量分配到B机房和C机房中 高级特性 泳道消息 产生背景 每多一个测试人员，都需要重新搭建一个相同配置的 Topic，造成人力和资源的浪费 对于 PPE(产品预览环境) 的消费者来说，资源没有生产环境多，所以无法承受生产环境的流量 泳道能够解决主干泳道流量隔间问题以及泳道资源重复创建问题（泳道1产生的消息只能在泳道1被消费） Databus 简化消息队列客户端复杂配置 解耦业务与 Topic 缓解集群压力，提高吞吐 Mirror 通过最终一致的方式（异步写入，不影响生产消息的过程），解决跨 Region 读写问题 RocketMQ 使用场景 针对电商业务线，其业务涉及广泛，如注册、订单、库存、物流等；同时，也会涉及许多业务峰值时刻，如秒杀活动、周年庆、定期特惠等\n架构 存储模型 高级特性 事务消息 本质上为事务的二阶段提交 延迟发送 延迟服务中的消息到达可消费时间时回写到CommitLog中，进行后续正常消费 处理失败 PS：右下角的ScheduleTopic为死信队列（消息不会再被消费者处理，需要人工介入查看） ",
-  "wordCount" : "113",
+  "articleBody": "几个简单案例引出消息队列的定义 系统崩溃 解决方案：解耦 服务处理能力有限 解决方案：削峰 链路耗时长尾 解决方案：异步 消息队列(MQ)定义 本质是队列，需要支持高吞吐、高并发、高可用 常见消息队列 Kafka 基本概念 Topic：就像是一个信箱或文件夹，用于对消息进行分类管理，不同业务类型的消息应该发送到不同的 Topic 中 Cluster：物理集群，每个集群中可以建立多个不同的 Topic Producer：生产者，负责将业务消息发送到 Topic 中 Consumer：消费者，负责消费 Topic 中的消息 ConsumerGroup：消费者组，不同组 Consumer 消费进度互不干涉 Offset：消息在 partition 内的相对位置信息，可以理解为唯一 ID，在 partition 内部严格递增 ISR：与 Leader 副本保持同步的副本集合（包括 Leader 自己），副本都是\"可信赖\"的，能够及时同步 Leader 的数据，可用于Leader 故障时，只从 ISR 中选择新的 Leader 消息 Producer 批量发送 数据压缩 Broker 顺序写（末尾追加消息）提高写入效率，减少磁盘的磁头移动 二分法检索偏移量索引文件（找到小于目标offset的最大索引文件和位置） 零拷贝减少数据在内核空间和用户空间之间不必要的拷贝，提升了数据传输效率 Consumer 自动分配 实现负载均衡 高可用 弹性扩展 弊端 切换主从状态耗时长 迁移时带来的负载不均衡问题（为了解决IO问题却引入了新的IO问题） 无缓存机制 Controller 和 Coordinator 和 Broker 在同一进程中，大量 IO 会造成其性能下降 BMQ 架构 优势 与 Kafka 相比 流程 写 状态机 写入失败时重新找新节点 读 Wait：Consumer很多时，轮询次数也提高，通过时间窗口或者数据大小窗口决定返回时机，避免请求过于频繁，降低IO压力 Cache：命中时直接返回给Consumer 多机房部署 A机房宕机时能够将流量分配到B机房和C机房中 高级特性 泳道消息 产生背景 每多一个测试人员，都需要重新搭建一个相同配置的 Topic，造成人力和资源的浪费 对于 PPE(产品预览环境) 的消费者来说，资源没有生产环境多，所以无法承受生产环境的流量 泳道能够解决主干泳道流量隔间问题以及泳道资源重复创建问题（泳道1产生的消息只能在泳道1被消费） Databus 简化消息队列客户端复杂配置 解耦业务与 Topic 缓解集群压力，提高吞吐 Mirror 通过最终一致的方式（异步写入，不影响生产消息的过程），解决跨 Region 读写问题 RocketMQ 使用场景 针对电商业务线，其业务涉及广泛，如注册、订单、库存、物流等；同时，也会涉及许多业务峰值时刻，如秒杀活动、周年庆、定期特惠等\n架构 存储模型 高级特性 事务消息 本质上为事务的二阶段提交 延迟发送 延迟服务中的消息到达可消费时间时回写到CommitLog中，进行后续正常消费 处理失败 PS：右下角的ScheduleTopic为死信队列（消息不会再被消费者处理，需要人工介入查看） 参考资料: 走进消息队列\n",
+  "wordCount" : "115",
   "inLanguage": "en",
   "datePublished": "2025-01-24T14:00:22+08:00",
   "dateModified": "2025-01-24T14:00:22+08:00",
@@ -188,7 +188,7 @@
     <h1 class="post-title entry-hint-parent">
       关于消息队列的学习
     </h1>
-    <div class="post-meta"><span title='2025-01-24 14:00:22 +0800 +0800'>January 24, 2025</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;113 words&nbsp;·&nbsp;Ziven
+    <div class="post-meta"><span title='2025-01-24 14:00:22 +0800 +0800'>January 24, 2025</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;115 words&nbsp;·&nbsp;Ziven
 
 </div>
   </header> <div class="toc">
@@ -464,6 +464,8 @@
 
 PS：右下角的ScheduleTopic为死信队列（消息不会再被消费者处理，需要人工介入查看）</li>
 </ul>
+<p>参考资料:
+<a href="https://bytedance.larkoffice.com/file/boxcnokp2zoxYUepDyhlObUFyJH">走进消息队列</a></p>
 
 
   </div>
