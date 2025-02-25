@@ -5,11 +5,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>架构初探 | Tim&#39;s Blog</title>
+<title>gomall项目总结 | Tim&#39;s Blog</title>
 <meta name="keywords" content="golang, 字节青训营">
-<meta name="description" content="关于后端架构的学习">
+<meta name="description" content="记录第一次开发微服务项目">
 <meta name="author" content="Ziven">
-<link rel="canonical" href="https://blog.ziven.site/posts/architecture-preliminary/">
+<link rel="canonical" href="https://blog.ziven.site/posts/go-mall/">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.fc220c15db4aef0318bbf30adc45d33d4d7c88deff3238b23eb255afdc472ca6.css" integrity="sha256-/CIMFdtK7wMYu/MK3EXTPU18iN7/MjiyPrJVr9xHLKY=" rel="preload stylesheet" as="style">
 <link rel="icon" href="https://blog.ziven.site/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="https://blog.ziven.site/favicon-16x16.png">
@@ -18,7 +18,7 @@
 <link rel="mask-icon" href="https://blog.ziven.site/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" hreflang="en" href="https://blog.ziven.site/posts/architecture-preliminary/">
+<link rel="alternate" hreflang="en" href="https://blog.ziven.site/posts/go-mall/">
 <noscript>
     <style>
         #theme-toggle,
@@ -55,16 +55,16 @@
         }
 
     </style>
-</noscript><meta property="og:title" content="架构初探" />
-<meta property="og:description" content="关于后端架构的学习" />
+</noscript><meta property="og:title" content="gomall项目总结" />
+<meta property="og:description" content="记录第一次开发微服务项目" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://blog.ziven.site/posts/architecture-preliminary/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2025-02-01T06:00:22+08:00" />
-<meta property="article:modified_time" content="2025-02-01T06:00:22+08:00" />
+<meta property="og:url" content="https://blog.ziven.site/posts/go-mall/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2025-02-25T12:00:22+08:00" />
+<meta property="article:modified_time" content="2025-02-25T12:00:22+08:00" />
 
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="架构初探"/>
-<meta name="twitter:description" content="关于后端架构的学习"/>
+<meta name="twitter:title" content="gomall项目总结"/>
+<meta name="twitter:description" content="记录第一次开发微服务项目"/>
 
 
 <script type="application/ld+json">
@@ -81,8 +81,8 @@
     {
       "@type": "ListItem",
       "position":  2 ,
-      "name": "架构初探",
-      "item": "https://blog.ziven.site/posts/architecture-preliminary/"
+      "name": "gomall项目总结",
+      "item": "https://blog.ziven.site/posts/go-mall/"
     }
   ]
 }
@@ -91,24 +91,24 @@
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "架构初探",
-  "name": "架构初探",
-  "description": "关于后端架构的学习",
+  "headline": "gomall项目总结",
+  "name": "gomall项目总结",
+  "description": "记录第一次开发微服务项目",
   "keywords": [
     "golang", "字节青训营"
   ],
-  "articleBody": "常见架构 单体架构 优点 简单 问题 运维需要停服 垂直应用架构 优点 水平扩容 运维无需停服 问题 职责过多，开发效率不高 爆炸半径大（一个服务挂了可能影响总流程的进行） SOA 将应用的不同功能单元抽象为服务 定义服务之间的通信标准（上图的沟通技巧） 微服务 SOA的去中心化（每个节点都具有相对平等的地位和权利）演进方向 问题 数据一致性 装货台共交付了多少蛋糕 高可用 师傅之间如何协作 治理 烤箱坏了如何容灾 解耦 \u0026 过微 运维成本更高，值得么 后端架构实战 自适应静态权重 方案 采集宿主机物理资源信息 调整容器注册的权重 优势 复杂度低 完全分布式，可用性高 微服务中间件无适配成本 缺点 无紧急回滚能力 缺乏运行时自适应能力 自适应动态权重Alpha 方案 容器动态权重的自适应调整 服务网格的服务发现 \u0026 流量调度能力 解耦出了动态权重决策中心 演进方向 解决无法紧急回滚的问题 动态权重有调度问题时，可以马上切换回静态权重进行调度 运行时权重自适应 缺点 过度流量倾斜可能会有异常情况（X的动态权重可能被调整为100.Y可能被调整为10） 自适应动态权重Beta 方案 服务网格上报 RPC 指标 演进方向 极端场景的处理成为可能 缺点 动态权重决策中心职责多且复杂 时序数据库压力较大 动态权重决策中心职责越来越多，迭代-\u003e变更-\u003e风险 自适应动态权重Release 演进方向 微服务化 离线分析引擎进行机器学习/数据分析帮助在线分析引擎做算法调优 引入消息队列削峰、解耦 离在线链路切分 梳理强弱依赖 参考资料: 架构初探-谁动了我的蛋糕\n",
-  "wordCount" : "74",
+  "articleBody": "仓库地址: https://github.com/Tim3088/gomall\n技术选型 后端技术 Go语言：高性能、并发处理能力强，适合编写高并发服务。 Kitex：基于Go语言的高性能RPC框架，用于微服务间的通信。 Hertz：基于Go语言的高性能HTTP框架，用于处理HTTP请求。 Consul：服务注册与发现工具，便于服务的动态管理。 部署与运维 Docker：容器化技术，用于应用的部署和管理，保证环境的一致性。 Prometheus：监控系统，用于系统监控和告警。 Loki \u0026 Promtail：Promtail 从自定义日志目录（ ./app/client/log）读取日志信息，并发送至 Loki；启动相关服务后能在 Grafana 中以 Loki 为数据源进行日志分析。 Grafana：服务启动后访问 http://localhost:3000 进入 Grafana，可在其中添加 Prometheus、Loki 等数据源并自定义面板。 Jaeger： 链路追踪，服务启动后访问 http://localhost:16686 进行请求链路追踪分析。 架构设计 总体架构 总体架构采用微服务架构，主要包括以下几个模块：\n认证服务：负责用户的身份认证(JWT)和权限管理(casbin)。 用户服务：处理用户的基本信息和操作。 商品服务：管理商品的增删改查操作。 购物车服务：处理用户的购物车操作。 订单服务：管理订单的创建、支付和状态更新。 支付服务：处理用户的支付请求。 结算服务：处理订单的结算操作。 客户端服务：服务发现，处理来自前端的HTTP请求。 服务间通信 服务间通信采用Kitex框架的RPC通信方式，保证高效的数据传输和调用。\n数据存储 数据存储采用MySQL和Redis相结合的方案：\nMySQL：存储核心业务数据，保证数据的一致性和可靠性。 Redis：用于缓存频繁访问的数据，提高系统的响应速度。 项目总结与反思 目前仍存在的问题： 性能瓶颈：在高并发场景下，系统响应速度可能较慢，需要优化数据库查询和缓存策略。 测试覆盖率不足：单元测试和集成测试的覆盖率不足，存在潜在的质量风险。 架构演进的可能性： 事件驱动架构：引入消息队列，实现异步通信和解耦。 容器化：使用Docker和Kubernetes进行容器化部署，提高部署和运维效率。 项目过程中的反思与总结： 需求变更管理：需求变更频繁，导致开发周期延长，需要加强需求的稳定性和变更管理。 技术选型：部分技术选型不合理，导致后期维护困难，需要在项目初期进行更充分的技术调研和验证。 版本控制：版本发布管理不规范，容易引发生产事故，需要制定严格的版本控制策略和发布流程，可以引入CI/CD自动化流程，确保每次代码变更都能够经过自动化测试和部署，减少人为错误，提高发布效率和稳定性。 ",
+  "wordCount" : "59",
   "inLanguage": "en",
-  "datePublished": "2025-02-01T06:00:22+08:00",
-  "dateModified": "2025-02-01T06:00:22+08:00",
+  "datePublished": "2025-02-25T12:00:22+08:00",
+  "dateModified": "2025-02-25T12:00:22+08:00",
   "author":[{
     "@type": "Person",
     "name": "Ziven"
   }],
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": "https://blog.ziven.site/posts/architecture-preliminary/"
+    "@id": "https://blog.ziven.site/posts/go-mall/"
   },
   "publisher": {
     "@type": "Organization",
@@ -186,9 +186,9 @@
   <header class="post-header">
     <div class="breadcrumbs"><a href="https://blog.ziven.site/">Home</a>&nbsp;»&nbsp;<a href="https://blog.ziven.site/posts/">Posts</a></div>
     <h1 class="post-title entry-hint-parent">
-      架构初探
+      gomall项目总结
     </h1>
-    <div class="post-meta"><span title='2025-02-01 06:00:22 +0800 +0800'>February 1, 2025</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;74 words&nbsp;·&nbsp;Ziven
+    <div class="post-meta"><span title='2025-02-25 12:00:22 +0800 +0800'>February 25, 2025</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;59 words&nbsp;·&nbsp;Ziven
 
 </div>
   </header> <div class="toc">
@@ -199,199 +199,98 @@
 
         <div class="inner"><ul>
                 <li>
-                    <a href="#%e5%b8%b8%e8%a7%81%e6%9e%b6%e6%9e%84" aria-label="常见架构">常见架构</a><ul>
+                    <a href="#%e6%8a%80%e6%9c%af%e9%80%89%e5%9e%8b" aria-label="技术选型">技术选型</a><ul>
                         
                 <li>
-                    <a href="#%e5%8d%95%e4%bd%93%e6%9e%b6%e6%9e%84" aria-label="单体架构">单体架构</a></li>
+                    <a href="#%e5%90%8e%e7%ab%af%e6%8a%80%e6%9c%af" aria-label="后端技术">后端技术</a></li>
                 <li>
-                    <a href="#%e5%9e%82%e7%9b%b4%e5%ba%94%e7%94%a8%e6%9e%b6%e6%9e%84" aria-label="垂直应用架构">垂直应用架构</a></li>
-                <li>
-                    <a href="#soa" aria-label="SOA">SOA</a></li>
-                <li>
-                    <a href="#%e5%be%ae%e6%9c%8d%e5%8a%a1" aria-label="微服务">微服务</a></li></ul>
+                    <a href="#%e9%83%a8%e7%bd%b2%e4%b8%8e%e8%bf%90%e7%bb%b4" aria-label="部署与运维">部署与运维</a></li></ul>
                 </li>
                 <li>
-                    <a href="#%e5%90%8e%e7%ab%af%e6%9e%b6%e6%9e%84%e5%ae%9e%e6%88%98" aria-label="后端架构实战">后端架构实战</a><ul>
+                    <a href="#%e6%9e%b6%e6%9e%84%e8%ae%be%e8%ae%a1" aria-label="架构设计">架构设计</a><ul>
                         
                 <li>
-                    <a href="#%e8%87%aa%e9%80%82%e5%ba%94%e9%9d%99%e6%80%81%e6%9d%83%e9%87%8d" aria-label="自适应静态权重">自适应静态权重</a></li>
+                    <a href="#%e6%80%bb%e4%bd%93%e6%9e%b6%e6%9e%84" aria-label="总体架构">总体架构</a></li>
                 <li>
-                    <a href="#%e8%87%aa%e9%80%82%e5%ba%94%e5%8a%a8%e6%80%81%e6%9d%83%e9%87%8dalpha" aria-label="自适应动态权重Alpha">自适应动态权重Alpha</a></li>
+                    <a href="#%e6%9c%8d%e5%8a%a1%e9%97%b4%e9%80%9a%e4%bf%a1" aria-label="服务间通信">服务间通信</a></li>
                 <li>
-                    <a href="#%e8%87%aa%e9%80%82%e5%ba%94%e5%8a%a8%e6%80%81%e6%9d%83%e9%87%8dbeta" aria-label="自适应动态权重Beta">自适应动态权重Beta</a></li>
-                <li>
-                    <a href="#%e8%87%aa%e9%80%82%e5%ba%94%e5%8a%a8%e6%80%81%e6%9d%83%e9%87%8drelease" aria-label="自适应动态权重Release">自适应动态权重Release</a>
+                    <a href="#%e6%95%b0%e6%8d%ae%e5%ad%98%e5%82%a8" aria-label="数据存储">数据存储</a></li></ul>
                 </li>
-            </ul>
-            </li>
+                <li>
+                    <a href="#%e9%a1%b9%e7%9b%ae%e6%80%bb%e7%bb%93%e4%b8%8e%e5%8f%8d%e6%80%9d" aria-label="项目总结与反思">项目总结与反思</a>
+                </li>
             </ul>
         </div>
     </details>
 </div>
 
-  <div class="post-content"><h1 id="常见架构">常见架构<a hidden class="anchor" aria-hidden="true" href="#常见架构">#</a></h1>
-<h2 id="单体架构">单体架构<a hidden class="anchor" aria-hidden="true" href="#单体架构">#</a></h2>
-<p><img loading="lazy" src="https://img.ziven.site/blog/architecture-preliminary/%e5%8d%95%e4%bd%93%e6%9e%b6%e6%9e%84.jpg" alt=""  />
-</p>
+  <div class="post-content"><p>仓库地址: <a href="https://github.com/Tim3088/gomall">https://github.com/Tim3088/gomall</a></p>
+<h1 id="技术选型">技术选型<a hidden class="anchor" aria-hidden="true" href="#技术选型">#</a></h1>
+<h2 id="后端技术">后端技术<a hidden class="anchor" aria-hidden="true" href="#后端技术">#</a></h2>
 <ul>
-<li>优点
-<ul>
-<li>简单</li>
+<li>Go语言：高性能、并发处理能力强，适合编写高并发服务。</li>
+<li>Kitex：基于Go语言的高性能RPC框架，用于微服务间的通信。</li>
+<li>Hertz：基于Go语言的高性能HTTP框架，用于处理HTTP请求。</li>
+<li>Consul：服务注册与发现工具，便于服务的动态管理。</li>
 </ul>
+<h2 id="部署与运维">部署与运维<a hidden class="anchor" aria-hidden="true" href="#部署与运维">#</a></h2>
+<ul>
+<li>Docker：容器化技术，用于应用的部署和管理，保证环境的一致性。</li>
+<li>Prometheus：监控系统，用于系统监控和告警。</li>
+<li>Loki &amp; Promtail：Promtail 从自定义日志目录（ ./app/client/log）读取日志信息，并发送至 Loki；启动相关服务后能在 Grafana 中以 Loki 为数据源进行日志分析。</li>
+<li>Grafana：服务启动后访问 http://localhost:3000 进入 Grafana，可在其中添加 Prometheus、Loki 等数据源并自定义面板。
+<img loading="lazy" src="https://img.ziven.site/blog/go-mall/%e7%9b%91%e6%8e%a7.JPEG" alt=""  />
+
+<img loading="lazy" src="https://img.ziven.site/blog/go-mall/%e6%97%a5%e5%bf%97.png" alt=""  />
 </li>
-<li>问题
-<ul>
-<li>运维需要停服</li>
-</ul>
-</li>
-</ul>
-<h2 id="垂直应用架构">垂直应用架构<a hidden class="anchor" aria-hidden="true" href="#垂直应用架构">#</a></h2>
-<p><img loading="lazy" src="https://img.ziven.site/blog/architecture-preliminary/%e5%9e%82%e7%9b%b4%e5%ba%94%e7%94%a8%e6%9e%b6%e6%9e%84.jpg" alt=""  />
-</p>
-<ul>
-<li>优点
-<ul>
-<li>水平扩容</li>
-<li>运维无需停服</li>
-</ul>
-</li>
-<li>问题
-<ul>
-<li>职责过多，开发效率不高</li>
-<li>爆炸半径大（一个服务挂了可能影响总流程的进行）</li>
-</ul>
+<li>Jaeger： 链路追踪，服务启动后访问 http://localhost:16686 进行请求链路追踪分析。
+<img loading="lazy" src="https://img.ziven.site/blog/go-mall/%e9%93%be%e8%b7%af%e8%bf%bd%e8%b8%aa.png" alt=""  />
 </li>
 </ul>
-<h2 id="soa">SOA<a hidden class="anchor" aria-hidden="true" href="#soa">#</a></h2>
-<p><img loading="lazy" src="https://img.ziven.site/blog/architecture-preliminary/SOA.jpg" alt=""  />
-</p>
+<h1 id="架构设计">架构设计<a hidden class="anchor" aria-hidden="true" href="#架构设计">#</a></h1>
+<h2 id="总体架构">总体架构<a hidden class="anchor" aria-hidden="true" href="#总体架构">#</a></h2>
+<p>总体架构采用微服务架构，主要包括以下几个模块：</p>
+<ol>
+<li>认证服务：负责用户的身份认证(JWT)和权限管理(casbin)。</li>
+<li>用户服务：处理用户的基本信息和操作。</li>
+<li>商品服务：管理商品的增删改查操作。</li>
+<li>购物车服务：处理用户的购物车操作。</li>
+<li>订单服务：管理订单的创建、支付和状态更新。</li>
+<li>支付服务：处理用户的支付请求。</li>
+<li>结算服务：处理订单的结算操作。</li>
+<li>客户端服务：服务发现，处理来自前端的HTTP请求。</li>
+</ol>
+<h2 id="服务间通信">服务间通信<a hidden class="anchor" aria-hidden="true" href="#服务间通信">#</a></h2>
+<p>服务间通信采用Kitex框架的RPC通信方式，保证高效的数据传输和调用。</p>
+<h2 id="数据存储">数据存储<a hidden class="anchor" aria-hidden="true" href="#数据存储">#</a></h2>
+<p>数据存储采用MySQL和Redis相结合的方案：</p>
 <ul>
-<li>将应用的不同功能单元抽象为服务</li>
-<li>定义服务之间的通信标准（上图的沟通技巧）</li>
+<li>MySQL：存储核心业务数据，保证数据的一致性和可靠性。</li>
+<li>Redis：用于缓存频繁访问的数据，提高系统的响应速度。</li>
 </ul>
-<h2 id="微服务">微服务<a hidden class="anchor" aria-hidden="true" href="#微服务">#</a></h2>
-<p><img loading="lazy" src="https://img.ziven.site/blog/architecture-preliminary/%e5%be%ae%e6%9c%8d%e5%8a%a1.jpg" alt=""  />
-</p>
+<h1 id="项目总结与反思">项目总结与反思<a hidden class="anchor" aria-hidden="true" href="#项目总结与反思">#</a></h1>
+<ol>
+<li>目前仍存在的问题：</li>
+</ol>
 <ul>
-<li>SOA的去中心化（每个节点都具有相对平等的地位和权利）演进方向</li>
-<li>问题
+<li>性能瓶颈：在高并发场景下，系统响应速度可能较慢，需要优化数据库查询和缓存策略。</li>
+<li>测试覆盖率不足：单元测试和集成测试的覆盖率不足，存在潜在的质量风险。</li>
+</ul>
+<ol start="2">
+<li>架构演进的可能性：</li>
+</ol>
 <ul>
-<li>数据一致性
+<li>事件驱动架构：引入消息队列，实现异步通信和解耦。</li>
+<li>容器化：使用Docker和Kubernetes进行容器化部署，提高部署和运维效率。</li>
+</ul>
+<ol start="3">
+<li>项目过程中的反思与总结：</li>
+</ol>
 <ul>
-<li>装货台共交付了多少蛋糕</li>
+<li>需求变更管理：需求变更频繁，导致开发周期延长，需要加强需求的稳定性和变更管理。</li>
+<li>技术选型：部分技术选型不合理，导致后期维护困难，需要在项目初期进行更充分的技术调研和验证。</li>
+<li>版本控制：版本发布管理不规范，容易引发生产事故，需要制定严格的版本控制策略和发布流程，可以引入CI/CD自动化流程，确保每次代码变更都能够经过自动化测试和部署，减少人为错误，提高发布效率和稳定性。</li>
 </ul>
-</li>
-<li>高可用
-<ul>
-<li>师傅之间如何协作</li>
-</ul>
-</li>
-<li>治理
-<ul>
-<li>烤箱坏了如何容灾</li>
-</ul>
-</li>
-<li>解耦 &amp; 过微
-<ul>
-<li>运维成本更高，值得么</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h1 id="后端架构实战">后端架构实战<a hidden class="anchor" aria-hidden="true" href="#后端架构实战">#</a></h1>
-<h2 id="自适应静态权重">自适应静态权重<a hidden class="anchor" aria-hidden="true" href="#自适应静态权重">#</a></h2>
-<p><img loading="lazy" src="https://img.ziven.site/blog/architecture-preliminary/%e8%87%aa%e9%80%82%e5%ba%94%e9%9d%99%e6%80%81%e6%9d%83%e9%87%8d.jpg" alt=""  />
-</p>
-<ul>
-<li>方案
-<ul>
-<li>采集宿主机物理资源信息</li>
-<li>调整容器注册的权重</li>
-</ul>
-</li>
-<li>优势
-<ul>
-<li>复杂度低</li>
-<li>完全分布式，可用性高</li>
-<li>微服务中间件无适配成本</li>
-</ul>
-</li>
-<li>缺点
-<ul>
-<li>无紧急回滚能力</li>
-<li>缺乏运行时自适应能力</li>
-</ul>
-</li>
-</ul>
-<h2 id="自适应动态权重alpha">自适应动态权重Alpha<a hidden class="anchor" aria-hidden="true" href="#自适应动态权重alpha">#</a></h2>
-<p><img loading="lazy" src="https://img.ziven.site/blog/architecture-preliminary/%e8%87%aa%e9%80%82%e5%ba%94%e9%9d%99%e6%80%81%e6%9d%83%e9%87%8dAlpha.jpg" alt=""  />
-</p>
-<ul>
-<li>方案
-<ul>
-<li>容器动态权重的自适应调整</li>
-<li>服务网格的服务发现 &amp; 流量调度能力</li>
-<li>解耦出了动态权重决策中心</li>
-</ul>
-</li>
-<li>演进方向
-<ul>
-<li>解决无法紧急回滚的问题
-<ul>
-<li>动态权重有调度问题时，可以马上切换回静态权重进行调度</li>
-</ul>
-</li>
-<li>运行时权重自适应</li>
-</ul>
-</li>
-<li>缺点
-<ul>
-<li>过度流量倾斜可能会有异常情况（X的动态权重可能被调整为100.Y可能被调整为10）</li>
-</ul>
-</li>
-</ul>
-<h2 id="自适应动态权重beta">自适应动态权重Beta<a hidden class="anchor" aria-hidden="true" href="#自适应动态权重beta">#</a></h2>
-<p><img loading="lazy" src="https://img.ziven.site/blog/architecture-preliminary/%e8%87%aa%e9%80%82%e5%ba%94%e5%8a%a8%e6%80%81%e6%9d%83%e9%87%8dBeta.jpg" alt=""  />
-</p>
-<ul>
-<li>方案
-<ul>
-<li>服务网格上报 RPC 指标</li>
-</ul>
-</li>
-<li>演进方向
-<ul>
-<li>极端场景的处理成为可能</li>
-</ul>
-</li>
-<li>缺点
-<ul>
-<li>动态权重决策中心职责多且复杂</li>
-<li>时序数据库压力较大</li>
-<li>动态权重决策中心职责越来越多，迭代-&gt;变更-&gt;风险</li>
-</ul>
-</li>
-</ul>
-<h2 id="自适应动态权重release">自适应动态权重Release<a hidden class="anchor" aria-hidden="true" href="#自适应动态权重release">#</a></h2>
-<p><img loading="lazy" src="https://img.ziven.site/blog/architecture-preliminary/%e8%87%aa%e9%80%82%e5%ba%94%e5%8a%a8%e6%80%81%e6%9d%83%e9%87%8dRelease.jpg" alt=""  />
-</p>
-<ul>
-<li>演进方向
-<ul>
-<li>微服务化
-<ul>
-<li>离线分析引擎进行机器学习/数据分析帮助在线分析引擎做算法调优</li>
-</ul>
-</li>
-<li>引入消息队列削峰、解耦</li>
-<li>离在线链路切分</li>
-<li>梳理强弱依赖</li>
-</ul>
-</li>
-</ul>
-<p>参考资料:
-<a href="https://bytedance.larkoffice.com/file/boxcnu5qAsrCmW6eVdlGZYs7DDo">架构初探-谁动了我的蛋糕</a></p>
 
 
   </div>
@@ -402,15 +301,10 @@
       <li><a href="https://blog.ziven.site/tags/%E5%AD%97%E8%8A%82%E9%9D%92%E8%AE%AD%E8%90%A5/">字节青训营</a></li>
     </ul>
 <nav class="paginav">
-  <a class="prev" href="https://blog.ziven.site/posts/go-mall/">
-    <span class="title">« Prev</span>
-    <br>
-    <span>gomall项目总结</span>
-  </a>
-  <a class="next" href="https://blog.ziven.site/posts/springboot-deploy/">
+  <a class="next" href="https://blog.ziven.site/posts/architecture-preliminary/">
     <span class="title">Next »</span>
     <br>
-    <span>Ubuntu部署SpringBoot项目</span>
+    <span>架构初探</span>
   </a>
 </nav>
 
