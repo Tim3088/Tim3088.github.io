@@ -15,12 +15,5 @@
       <guid>https://blog.ziven.site/posts/springboot-deploy/</guid>
       <description>记录第一次在Ubuntu上部署SpringBoot项目</description>
     </item>
-    <item>
-      <title>Webflux流式响应</title>
-      <link>https://blog.ziven.site/posts/webflux/</link>
-      <pubDate>Mon, 18 Nov 2024 20:21:18 +0800</pubDate>
-      <guid>https://blog.ziven.site/posts/webflux/</guid>
-      <description>简单讲讲Webflux流式响应</description>
-    </item>
   </channel>
 </rss>

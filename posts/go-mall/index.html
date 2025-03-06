@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
 <title>gomall项目总结 | Tim&#39;s Blog</title>
-<meta name="keywords" content="golang, 字节青训营">
+<meta name="keywords" content="golang, 项目总结">
 <meta name="description" content="记录第一次开发微服务项目">
 <meta name="author" content="Ziven">
 <link rel="canonical" href="https://blog.ziven.site/posts/go-mall/">
@@ -95,7 +95,7 @@
   "name": "gomall项目总结",
   "description": "记录第一次开发微服务项目",
   "keywords": [
-    "golang", "字节青训营"
+    "golang", "项目总结"
   ],
   "articleBody": "仓库地址: https://github.com/Tim3088/gomall\n技术选型 后端技术 Go语言：高性能、并发处理能力强，适合编写高并发服务。 Kitex：基于Go语言的高性能RPC框架，用于微服务间的通信。 Hertz：基于Go语言的高性能HTTP框架，用于处理HTTP请求。 Consul：服务注册与发现工具，便于服务的动态管理。 部署与运维 Docker：容器化技术，用于应用的部署和管理，保证环境的一致性。 Prometheus：监控系统，用于系统监控和告警。 Loki \u0026 Promtail：Promtail 从自定义日志目录（ ./app/client/log）读取日志信息，并发送至 Loki；启动相关服务后能在 Grafana 中以 Loki 为数据源进行日志分析。 Grafana：服务启动后访问 http://localhost:3000 进入 Grafana，可在其中添加 Prometheus、Loki 等数据源并自定义面板。 Jaeger： 链路追踪，服务启动后访问 http://localhost:16686 进行请求链路追踪分析。 架构设计 总体架构 总体架构采用微服务架构，主要包括以下几个模块：\n认证服务：负责用户的身份认证(JWT)和权限管理(casbin)。 用户服务：处理用户的基本信息和操作。 商品服务：管理商品的增删改查操作。 购物车服务：处理用户的购物车操作。 订单服务：管理订单的创建、支付和状态更新。 支付服务：处理用户的支付请求。 结算服务：处理订单的结算操作。 客户端服务：服务发现，处理来自前端的HTTP请求。 服务间通信 服务间通信采用Kitex框架的RPC通信方式，保证高效的数据传输和调用。\n数据存储 数据存储采用MySQL和Redis相结合的方案：\nMySQL：存储核心业务数据，保证数据的一致性和可靠性。 Redis：用于缓存频繁访问的数据，提高系统的响应速度。 项目总结与反思 目前仍存在的问题： 性能瓶颈：在高并发场景下，系统响应速度可能较慢，需要优化数据库查询和缓存策略。 测试覆盖率不足：单元测试和集成测试的覆盖率不足，存在潜在的质量风险。 架构演进的可能性： 事件驱动架构：引入消息队列，实现异步通信和解耦。 容器化：使用Docker和Kubernetes进行容器化部署，提高部署和运维效率。 项目过程中的反思与总结： 需求变更管理：需求变更频繁，导致开发周期延长，需要加强需求的稳定性和变更管理。 技术选型：部分技术选型不合理，导致后期维护困难，需要在项目初期进行更充分的技术调研和验证。 版本控制：版本发布管理不规范，容易引发生产事故，需要制定严格的版本控制策略和发布流程，可以引入CI/CD自动化流程，确保每次代码变更都能够经过自动化测试和部署，减少人为错误，提高发布效率和稳定性。 ",
   "wordCount" : "59",
@@ -298,7 +298,7 @@
   <footer class="post-footer">
     <ul class="post-tags">
       <li><a href="https://blog.ziven.site/tags/golang/">Golang</a></li>
-      <li><a href="https://blog.ziven.site/tags/%E5%AD%97%E8%8A%82%E9%9D%92%E8%AE%AD%E8%90%A5/">字节青训营</a></li>
+      <li><a href="https://blog.ziven.site/tags/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/">项目总结</a></li>
     </ul>
 <nav class="paginav">
   <a class="next" href="https://blog.ziven.site/posts/architecture-preliminary/">
