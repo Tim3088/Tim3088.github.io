@@ -97,8 +97,8 @@
   "keywords": [
     "ubuntu", "SpringBoot"
   ],
-  "articleBody": "前提 安装项目所需的数据库(MySQL/Redis)并配置，同时安装maven(需要在Ubuntu中对项目进行打包时)\n部署过程 安装jdk sudo apt update sudo apt install openjdk-17-jdk 验证安装\njava -version 项目打包 mvn clean mvn package 生成的jar包位于项目的target目录下\n修改jar包权限 确保有可执行权限\nchmod 740 xxx.jar 配置 service 文件 指令 创建并编辑 service 文件\nsudo vim /etc/systemd/system/xxx.service 编写配置文件 [Unit] # 单元描述，说明该服务是后端应用 Description=后端 # 服务启动顺序，确保在 network、mysql 和 redis 服务启动后启动 After=network.target mysql.service redis.service [Service] # 指定运行该服务的用户 User=root # 设置工作目录为 Java 应用的根目录 WorkingDirectory=/var/www/java-app # 核心启动参数 ExecStart=/usr/bin/java \\ # 初始堆内存大小为 4GB -Xms4g \\ # 最大堆内存大小为 32GB -Xmx32g \\ # 最大元空间大小为 32GB -XX:MaxMetaspaceSize=32g \\ # 使用 ZGC 垃圾收集器 -XX:+UseZGC \\ # 设置 ZGC 的分配峰值容忍度为 5 -XX:ZAllocationSpikeTolerance=5 \\ # 预先触摸堆内存，减少启动时的延迟 -XX:+AlwaysPreTouch \\ # 当发生 OutOfMemoryError 时生成堆转储文件 -XX:+HeapDumpOnOutOfMemoryError \\ # 指定堆转储文件的路径 -XX:HeapDumpPath=/var/log/java-heap.hprof \\ # 使用更快的伪随机数生成器 -Djava.security.egd=file:/dev/./urandom \\ # 指定要运行的 jar 文件 -jar game-0.0.1-SNAPSHOT.jar \\ # 激活生产环境配置 --spring.profiles.active=prod # 服务类型为 simple，表示 systemd 会等待 ExecStart 启动的进程结束后认为服务启动完成 Type=simple # 服务退出后自动重启 Restart=always # 重启前等待 5 秒 RestartSec=5 # 启动超时时间为 180 秒 TimeoutStartSec=180 # 停止超时时间为 30 秒 TimeoutStopSec=30 # 日志配置 # 标准输出追加到 java-app.log 文件 StandardOutput=append:/var/log/java-app.log # 标准错误输出追加到 java-error.log 文件 StandardError=append:/var/log/java-error.log # 添加资源限制 # 最大打开文件数限制为 65535 LimitNOFILE=65535 # 最大进程数限制为 65535 LimitNPROC=65535 [Install] # 指定服务安装在 multi-user.target 下 WantedBy=multi-user.target 防火墙配置 sudo ufw status # 检查防火墙是否被启用 sudo ufw enable # 启用防火墙 sudo ufw allow 8080 # 放行服务端口 sudo ufw allow from 33.11.11.11 to any port 8080 # 也可仅放行前端ip 启动项目 sudo systemctl start xxx 也可通过如下命令启动(需在jar目录下 不用编写配置文件 适合测试环境)\nnohup java -jar xxx.jar ",
-  "wordCount" : "212",
+  "articleBody": "前提 安装项目所需的数据库(MySQL/Redis)并配置，同时安装maven(需要在Ubuntu中对项目进行打包时)\n部署过程 安装jdk sudo apt update sudo apt install openjdk-17-jdk 验证安装\njava -version 项目打包 mvn clean mvn package 生成的jar包位于项目的target目录下\n修改jar包权限 确保有可执行权限\nchmod 740 xxx.jar 配置 service 文件 指令 创建并编辑 service 文件\nsudo vim /etc/systemd/system/xxx.service 编写配置文件 [Unit] # 单元描述，说明该服务是后端应用 Description=后端 # 服务启动顺序，确保在 network、mysql 和 redis 服务启动后启动 After=network.target mysql.service redis.service [Service] # 指定运行该服务的用户 User=root # 设置工作目录为 Java 应用的根目录 WorkingDirectory=/var/www/java-app # 核心启动参数 ExecStart=/usr/bin/java \\ # 初始堆内存大小为 4GB -Xms4g \\ # 最大堆内存大小为 4GB -Xmx4g \\ # 最大元空间大小为 32GB -XX:MaxMetaspaceSize=32g \\ # 指定要运行的 jar 文件 -jar game-0.0.1-SNAPSHOT.jar \\ # 激活生产环境配置 --spring.profiles.active=prod # 服务类型为 simple，表示 systemd 会等待 ExecStart 启动的进程结束后认为服务启动完成 Type=simple # 服务退出后自动重启 Restart=always # 重启前等待 3 秒 RestartSec=3 # 启动超时时间为 60 秒 TimeoutStartSec=60 # 停止超时时间为 30 秒 TimeoutStopSec=30 # 日志配置 # 标准输出追加到 java-app.log 文件 StandardOutput=append:/var/log/java-app.log # 标准错误输出追加到 java-error.log 文件 StandardError=append:/var/log/java-error.log # 添加资源限制 # 最大打开文件数限制为 65535 LimitNOFILE=65535 # 最大进程数限制为 65535 LimitNPROC=65535 [Install] # 指定服务安装在 multi-user.target 下 WantedBy=multi-user.target 防火墙配置 sudo ufw status # 检查防火墙是否被启用 sudo ufw enable # 启用防火墙 sudo ufw allow 8080 # 放行服务端口 sudo ufw allow from 33.11.11.11 to any port 8080 # 也可仅放行前端ip 启动项目 sudo systemctl start xxx 也可通过如下命令启动(需在jar目录下 不用编写配置文件 适合测试环境)\nnohup java -jar xxx.jar ",
+  "wordCount" : "181",
   "inLanguage": "en",
   "datePublished": "2025-01-29T06:00:22+08:00",
   "dateModified": "2025-01-29T06:00:22+08:00",
@@ -188,7 +188,7 @@
     <h1 class="post-title entry-hint-parent">
       Ubuntu部署SpringBoot项目
     </h1>
-    <div class="post-meta"><span title='2025-01-29 06:00:22 +0800 +0800'>January 29, 2025</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;212 words&nbsp;·&nbsp;Ziven
+    <div class="post-meta"><span title='2025-01-29 06:00:22 +0800 +0800'>January 29, 2025</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;181 words&nbsp;·&nbsp;Ziven
 
 </div>
   </header> <div class="toc">
@@ -265,22 +265,10 @@ WorkingDirectory=/var/www/java-app
 ExecStart=/usr/bin/java \
     # 初始堆内存大小为 4GB
     -Xms4g \
-    # 最大堆内存大小为 32GB
-    -Xmx32g \
+    # 最大堆内存大小为 4GB
+    -Xmx4g \
     # 最大元空间大小为 32GB
     -XX:MaxMetaspaceSize=32g \
-    # 使用 ZGC 垃圾收集器
-    -XX:+UseZGC \
-    # 设置 ZGC 的分配峰值容忍度为 5
-    -XX:ZAllocationSpikeTolerance=5 \
-    # 预先触摸堆内存，减少启动时的延迟
-    -XX:+AlwaysPreTouch \
-    # 当发生 OutOfMemoryError 时生成堆转储文件
-    -XX:+HeapDumpOnOutOfMemoryError \
-    # 指定堆转储文件的路径
-    -XX:HeapDumpPath=/var/log/java-heap.hprof \
-    # 使用更快的伪随机数生成器
-    -Djava.security.egd=file:/dev/./urandom \
     # 指定要运行的 jar 文件
     -jar game-0.0.1-SNAPSHOT.jar \
     # 激活生产环境配置
@@ -290,10 +278,10 @@ ExecStart=/usr/bin/java \
 Type=simple
 # 服务退出后自动重启
 Restart=always
-# 重启前等待 5 秒
-RestartSec=5
-# 启动超时时间为 180 秒
-TimeoutStartSec=180
+# 重启前等待 3 秒
+RestartSec=3
+# 启动超时时间为 60 秒
+TimeoutStartSec=60
 # 停止超时时间为 30 秒
 TimeoutStopSec=30
 
