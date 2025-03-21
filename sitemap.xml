@@ -3,16 +3,19 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://blog.ziven.site/posts/</loc>
-    <lastmod>2025-03-06T12:00:22+08:00</lastmod>
+    <lastmod>2025-03-21T06:00:22+08:00</lastmod>
   </url><url>
     <loc>https://blog.ziven.site/tags/springboot/</loc>
-    <lastmod>2025-03-06T12:00:22+08:00</lastmod>
+    <lastmod>2025-03-21T06:00:22+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.ziven.site/posts/springboot-prometheus-grafana/</loc>
+    <lastmod>2025-03-21T06:00:22+08:00</lastmod>
   </url><url>
     <loc>https://blog.ziven.site/tags/</loc>
-    <lastmod>2025-03-06T12:00:22+08:00</lastmod>
+    <lastmod>2025-03-21T06:00:22+08:00</lastmod>
   </url><url>
     <loc>https://blog.ziven.site/</loc>
-    <lastmod>2025-03-06T12:00:22+08:00</lastmod>
+    <lastmod>2025-03-21T06:00:22+08:00</lastmod>
   </url><url>
     <loc>https://blog.ziven.site/posts/dream-core/</loc>
     <lastmod>2025-03-06T12:00:22+08:00</lastmod>
